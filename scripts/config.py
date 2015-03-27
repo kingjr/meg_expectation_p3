@@ -51,7 +51,7 @@ highpass = 0.75
 filtersize = 16384
 
 # FILENAMES ####################################################################
-raw_fname_tmp = 'run_{:02d}_sss.fif'
+raw_fname_tmp = '{:s}_main_{:d}_sss.fif'
 trans_fname_tmp = 'run_{:02d}_sss-trans.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
 # XXX any reason why -eve. but _raw?
