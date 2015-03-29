@@ -22,7 +22,7 @@ git clone https://github.com/dengemann/meeg-preprocessing
 sudo python install.py
 ```
 
-- Then you can download this repository
+- Then you can download this repository (the meeg_preprocessing folder needs to be in this one or you need to add its location to the paths defined in the scripts - otherwise it won't be recognized)
 ```
 cd <where_you_want_to_put_your_analysis>
 git clone https://github.com/kingjr/meg_expectation_p3.git
