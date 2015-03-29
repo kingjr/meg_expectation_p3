@@ -2,6 +2,9 @@
 
 ## INSTALL
 You'll need a bunch of libraries to make it work. There's probably some missing. We'll complete the documentation here
+
+- add export PATH='~/anaconda/bin/:$PATH' to .bash_profile (see http://apple.stackexchange.com/questions/99835/how-to-create-bash-profile-and-profile)
+
 - git
 ```sudo apt-get install git```
 
