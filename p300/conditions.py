@@ -43,20 +43,21 @@ def get_events(events):
         # Trigger order per trial: ttl_value, letter/number, PAS
 
         # Event type: stimulus or response trigger
-        if events[ii, 2] <= (60):
+        if events[ii, 2] < 64:
             event['type'] = 'stim'
         else:
             event['type'] = 'motor'
 
         # Stimulus category (absent/letter/digit)
+        # XXX The stim definition may be simplifiable in base 2?
         if event['type'] == 'stim':
-            if events[ii,2] in range(1,5) or range(13,17) or range(25,29) or range(37,41) or range(49,53):
+            if events[ii,2] in (range(1,5) or range(13,17) or range(25,29) or range(37,41) or range(49,53)):
                 # 1-4 13-16 25-28 37-40 49-52
                 event['target'] = 'absent'
-            if events[ii,2] in range(5,9) or range(17,21) or range(29,33) or range(41,45) or range(53,57):
+            if events[ii,2] in (range(5,9) or range(17,21) or range(29,33) or range(41,45) or range(53,57)):
                 # 5 7 17-20 29-32 41-44 54 56
                 event['target'] = 'letter'
-            if events[ii,2] in range(9,13) or range(21,25) or range(33,37) or range(45,49) or range(57,60):
+            if events[ii,2] in (range(9,13) or range(21,25) or range(33,37) or range(45,49) or range(57,60)):
                 # 9 11 21-24 33-36 45-48 58 60
                 event['target'] = 'number'
         else:
