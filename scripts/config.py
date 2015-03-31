@@ -36,6 +36,7 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
             's12_aa100234', 's15_nv110179', 's18_rg110386', 's21_jl130434',
             's24_cl120289', 's4_sa130042', ' s7_jm100109']
 # not included: s15_nv110179 (MaxFilter), s19_cd110147 (MaxFilter)
+# s14_ac130389, s17_ft120490 have two sss for certain blocks
 
 subjects = ['s23_pf120155'] # For now, only run on on subject
 
@@ -51,7 +52,7 @@ highpass = 0.75
 filtersize = 16384
 
 # FILENAMES ####################################################################
-raw_fname_tmp = '{:s}_main_{:d}_sss.fif'
+raw_fname_tmp = '{:s}_main{:d}_sss.fif'
 trans_fname_tmp = 'run_{:02d}_sss-trans.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
 # XXX any reason why -eve. but _raw?
@@ -83,8 +84,7 @@ ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
 ica_decim = 50
 
 # EVENTS #######################################################################
-# Exceptional case: subject06 run 9 had a trigger test within the
-# recording, need to start collecting events after that/
+
 events_params = dict(subject06_ha=[dict()] * 9 +
                                   [dict(first_sample=140000)])
 
@@ -97,7 +97,7 @@ cfg = dict(event_id=event_id, decim=4)
 
 # Specific epochs parameters for stim-lock and response-lock conditions
 epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
-                   tmax=1.100, baseline=[-.500, -.100], **cfg)
+                   tmax=1.000, baseline=[-.500, -.100], **cfg)
 epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500,
                    tmax=0.200, baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_resp]

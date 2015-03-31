@@ -44,7 +44,7 @@ for subject in subjects:
         else:
             events_param = dict()
 
-        events = mne.find_events(raw, stim_channel='STI101', verbose=True
+        events = mne.find_events(raw, stim_channel='STI101', verbose=True,
                                   consecutive='increasing', min_duration=0.003)
 
         # Save
