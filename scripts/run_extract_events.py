@@ -47,9 +47,7 @@ for subject in subjects:
         events = mne.find_events(raw, stim_channel='STI101', verbose=True,
                                   consecutive='increasing', min_duration=0.003)
 
-        # Only select stimulus triggers
-        events = events[:, 2] < 64
-        
+
         # Save
         mne.write_events(
             op.join(this_path, events_fname_filt_tmp.format(r)), events)
