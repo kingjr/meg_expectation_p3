@@ -37,6 +37,7 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
             's24_cl120289', 's4_sa130042', ' s7_jm100109']
 # not included: s15_nv110179 (MaxFilter), s19_cd110147 (MaxFilter)
 # s14_ac130389, s17_ft120490 have two sss for certain blocks
+# XXX JRK: This should be solvable!
 
 subjects = ['s23_pf120155'] # For now, only run on on subject
 
@@ -85,8 +86,7 @@ ica_decim = 50
 
 # EVENTS #######################################################################
 
-events_params = dict(subject06_ha=[dict()] * 9 +
-                                  [dict(first_sample=140000)])
+events_params = dict()
 
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock
@@ -98,24 +98,11 @@ cfg = dict(event_id=event_id, decim=4)
 # Specific epochs parameters for stim-lock and response-lock conditions
 epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
                    tmax=1.000, baseline=[-.500, -.100], **cfg)
-epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500,
+epochs_motor1 = dict(name='motor1_lock', events='motor1', tmin=-0.500,
                    tmax=0.200, baseline=None, **cfg)
-epochs_params = [epochs_stim, epochs_resp]
+# XXX JRK: Could add second motor response preproc here
+epochs_params = [epochs_stim, epochs_motor1]
 
-# COV ##########################################################################
-cov_method = ['shrunk', 'empirical']
-
-# INVERSE ######################################################################
-fsave_grade = 4
-# fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif' # XXX check file name
-make_inverse_params = {'loose': 0.2,
-                       'depth': 0.8,
-                       'fixed': False,
-                       'limit_depth_chs': True}
-snr = 3
-lambda2 = 1.0 / snr ** 2
-apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
-                        'pick_normal': None}
 
 # MAIN CONTRASTS ###############################################################
 # Here define your contrast of interest
@@ -129,8 +116,9 @@ contrasts = (
 # DECODING #####################################################################
 # preprocessing for memory
 decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
-decoding_preproc_M = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
-decoding_preproc = [decoding_preproc_S, decoding_preproc_M]
+decoding_preproc_M1 = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
+# XXX JRK: Could add second motor response preproc here
+decoding_preproc = [decoding_preproc_S, decoding_preproc_M1]
 
 # specify classifier
 from sklearn.preprocessing import StandardScaler
