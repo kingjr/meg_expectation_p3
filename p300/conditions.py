@@ -44,8 +44,6 @@ def get_events(events):
     for ii in range(n_events): ## range does not include the listed max - does this matter here?
         event = dict()
 
-        # Trigger order per trial: ttl_value, letter/number, PAS
-
         # Event type: stimulus, 1st or 2nd response
         if events[ii, 2] < (2 ** 15):
             event['type'] = 'stim'
@@ -57,8 +55,8 @@ def get_events(events):
         # Extract trigger values of combined stim, first motor and second motor
         trigger = events[ii, 2] % (2 ** 15)
         trigger_stim = trigger % 64
-        trigger_motor1 = trigger % 512 - trigger_stim
-        trigger_motor2 = trigger - trigger_stim - trigger_motor1
+        trigger_motor2 = trigger % 1024 - trigger_stim
+        trigger_motor1 = trigger - trigger_stim - trigger_motor2
 
 
         # Stimulus category (absent/letter/digit)
