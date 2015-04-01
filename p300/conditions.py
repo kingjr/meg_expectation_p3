@@ -196,3 +196,45 @@ def get_events(events):
         events_data_frame.append(event)
 
     return pd.DataFrame(events_data_frame)
+
+def extract_events(raw):
+    """This is a hand-made extraction of the events so as to look for all stim
+    triggers, find the two following motor responses, and combined their trigger
+    values to know that they go in triplets."""
+
+    events = mne.find_events(raw, stim_channel='STI101', verbose=True,
+                             consecutive='increasing', min_duration=0.003)
+
+    # Define stim and motor triggers
+    stim  = range(1, 64)
+    motor = [64, 128, 256, 512, 8192, 16384]
+
+    # Identify # of stim and motor events
+    stim_inds = np.where([i in stim for i in events[:, 2]])[0]
+    motor_inds = np.where([i in motor for i in events[:, 2]])[0]
+
+    # For each stimulus trigger, find the corresponding motor responses, and
+    # assign them combined values:
+    new_events = list()
+    for s in stim_inds:
+        # find following triggers
+        inds = np.where(events[:, 0] > events[s, 0])[0]
+        # only keep those that are motor responses
+        inds = np.intersect1d(inds, motor_inds)
+        if len(inds) < 2:
+            raise(RuntimeError('< 2 motor responses after stim %s !' % ind))
+
+        # Combine stimulus and response trigger values so as to get both
+        # stimulus and motor information in each event.
+        combined = events[s, 2] + events[inds[0], 2] + events[inds[1], 2]
+
+        # Add ttl value to explicitely differentiate the three events
+        extra_ttl = 2 ** (np.log2(np.max(motor + stim)) + 1)
+        # 1st: stim
+        new_events.append([events[s, 0], 0, combined + 0 * extra_ttl])
+        # 2nd: first motor response
+        new_events.append([events[inds[0], 0], 0, combined + 1 * extra_ttl])
+        # 3rd: second motor response
+        new_events.append([events[inds[1], 0], 0, combined + 2 * extra_ttl])
+
+    return np.array(new_events)

@@ -9,6 +9,8 @@ import mne
 
 from meeg_preprocessing.utils import setup_provenance
 
+from p300.conditions import extract_events
+
 from config import (
     data_path,
     subjects,
@@ -44,9 +46,7 @@ for subject in subjects:
         else:
             events_param = dict()
 
-        events = mne.find_events(raw, stim_channel='STI101', verbose=True,
-                                  consecutive='increasing', min_duration=0.003)
-
+        events = extract_events(raw)
 
         # Save
         mne.write_events(
