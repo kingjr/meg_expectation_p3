@@ -107,9 +107,12 @@ epochs_params = [epochs_stim, epochs_motor1]
 # MAIN CONTRASTS ###############################################################
 # Here define your contrast of interest
 contrasts = (
-            dict(name='motor_side',
-                 include=dict(cond='motor_side', values=['left', 'right']),
-                 exclude=[]),
+            dict(name='present_absent',
+                 include=dict(cond='present', values=[True, False]),
+                 exclude=[dict(cond='soa', values=[17, 33, 50, 83])]),
+            dict(name='motor1_finger',
+                 include=dict(cond='motor1', values=['left', 'right']),
+                 exclude=[dict(cond='missed_m1', values=[True])]),
             )
 
 
