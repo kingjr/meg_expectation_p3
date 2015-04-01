@@ -25,9 +25,9 @@ def events_select_condition(trigger, condition):
         selection = np.where((trigger > 0) & (trigger < 2 ** 15))[0]
     elif condition == 'motor':  # remove response not linked to stim
         selection = np.where(trigger >= 2 ** 15)[0]
-    elif condition == 'motor1':  # remove response not linked to stim and 2nd motor response
+    elif condition == 'motor2':  # remove response not linked to stim and 2nd motor response
         selection = np.where((trigger >= 2 ** 15) & (trigger < 2 ** 16))[0]
-    elif condition == 'motor2':  # remove response not linked to stim
+    elif condition == 'motor1':  # remove response not linked to stim
         selection = np.where(trigger >= 2 ** 16)[0]
     return selection
 
@@ -62,40 +62,48 @@ def get_events(events):
         # Stimulus category (absent/letter/digit)
         # XXX JRK: The stim definition should be simplifiable in base 2, to
         # avoid the possible introduction of errors
-        if trigger_stim in (range(1,5) or range(13,17) or range(25,29) or
-                            range(37,41) or range(49,53)):
-            # 1-4 13-16 25-28 37-40 49-52
-            event['target'] = 'absent'
-        if trigger_stim in (range(5,9) or range(17,21) or range(29,33) or
-                            range(41,45) or range(53,57)):
-            # 5 7 17-20 29-32 41-44 54 56
-            event['target'] = 'letter'
-        if trigger_stim in (range(9,13) or range(21,25) or range(33,37) or
-                            range(45,49) or range(57,60)):
-            # 9 11 21-24 33-36 45-48 58 60
-            event['target'] = 'number'
-        else:
-            # XXX JRK: Always add else conditions
-            event['target'] = None  # is it an error? Else defined it
 
-        # SOA for target-present trials
-        if trigger_stim in range (5,13):
-            # 5, 7, 9, 11 (can be 5-12)
-            event['soa'] = 17
-        if trigger_stim in range(17,25):
-            # 17-24
-            event['soa'] = 33
-        if trigger_stim in range(29,37):
-            # 29-36
-            event['soa'] = 50
-        if trigger_stim in range(41,49):
-            # 41-48
-            event['soa'] = 67
-        if trigger_stim in range(53,61):
-            # 54,56,58,60 (can be 53-60)
-            event['soa'] = 83
+        # Target present?
+        if trigger_stim in (range(1,5) + range(13,17) + range(25,29) +
+                            range(37,41) + range(49,53)):
+            # 1-4 13-16 25-28 37-40 49-52
+            event['present'] = False
+            event['target'] = None
+            event['soa'] = None
         else:
-            event['soa'] = None  # XXX JRK:
+            event['present'] = True
+
+            # Target type
+            if trigger_stim in (range(5,9) + range(17,21) + range(29,33) +
+                                range(41,45) + range(53,57)):
+                # 5 7 17-20 29-32 41-44 54 56
+                event['target'] = 'letter'
+            elif trigger_stim in (range(9,13) + range(21,25) + range(33,37) +
+                                  range(45,49) + range(57,60)):
+                # 9 11 21-24 33-36 45-48 58 60
+                event['target'] = 'number'
+            else:
+                # XXX JRK: Always add else conditions
+                event['target'] = None  # is it an error? Else defined it
+
+            # SOA for target-present trials
+            if trigger_stim in range (5,13):
+                # 5, 7, 9, 11 (can be 5-12)
+                event['soa'] = 17
+            elif trigger_stim in range(17,25):
+                # 17-24
+                event['soa'] = 33
+            elif trigger_stim in range(29,37):
+                # 29-36
+                event['soa'] = 50
+            elif trigger_stim in range(41,49):
+                # 41-48
+                event['soa'] = 67
+            elif trigger_stim in range(53,61):
+                # 54,56,58,60 (can be 53-60)
+                event['soa'] = 83
+            else:
+                event['soa'] = None  # XXX JRK:
 
         # Forced_choice response (which right hand finger corresponds to letter
         # response)
@@ -103,12 +111,12 @@ def get_events(events):
                             29, 30, 33, 34, 37, 38, 41, 42, 45, 46, 49, 50, 53,
                             54, 57, 58]:
             event['letter_resp'] = 'left'
-        if trigger_stim in [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28,
-                            31, 32, 35, 36, 39, 40, 43, 44, 47, 48, 51, 52, 55,
-                            56, 59, 60]:
+        elif trigger_stim in [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27,
+                            28, 31, 32, 35, 36, 39, 40, 43, 44, 47, 48, 51, 52,
+                            55, 56, 59, 60]:
             event['letter_resp'] = 'right'
         else:
-            event['letter_resp'] = None # XXX JRK : check
+            event['letter_resp'] = None # XXX JRK : check?
 
         # motor response
         if trigger_motor1 == (2 ** 13):
@@ -134,14 +142,14 @@ def get_events(events):
         event['missed_m2'] = False
         if trigger_motor2 == (2 ** 6):
             # 64
-            event['pas'] = 0  # Let's take the python convention starting at 0
-        if trigger_motor2 == (2 ** 7):
+            event['pas'] = 0  # XXX JRK : Let's take the python style: start = 0
+        elif trigger_motor2 == (2 ** 7):
             # 128
             event['pas'] = 1
-        if trigger_motor2 == (2 ** 8):
+        elif trigger_motor2 == (2 ** 8):
             # 256
             event['pas'] = 2
-        if trigger_motor2 == (2 ** 9):
+        elif trigger_motor2 == (2 ** 9):
             # 512
             event['pas'] = 3
         else:
@@ -153,9 +161,11 @@ def get_events(events):
         if ((trigger_stim % 2) == 1):
             #odd numbers
             event['block'] = 'invisible'
-        if ((trigger_stim % 2) == 0):
+        elif ((trigger_stim % 2) == 0):
             #even numbers
             event['block'] = 'visible'
+        else:
+            event['block'] = None # XXX JRK : check
 
 
         # Local context
