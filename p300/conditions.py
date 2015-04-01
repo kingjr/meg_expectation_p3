@@ -41,7 +41,7 @@ def get_events(events):
     events_data_frame = list()
 
     # Loop across all trials
-    for ii in range(n_events): ## range does not include the listed max - does this matter here?
+    for ii in range(n_events):
         event = dict()
 
         # Event type: stimulus, 1st or 2nd response
@@ -142,7 +142,7 @@ def get_events(events):
         event['missed_m2'] = False
         if trigger_motor2 == (2 ** 6):
             # 64
-            event['pas'] = 0  # XXX JRK : Let's take the python style: start = 0
+            event['pas'] = 0
         elif trigger_motor2 == (2 ** 7):
             # 128
             event['pas'] = 1
@@ -169,21 +169,24 @@ def get_events(events):
 
 
         # Local context
-        '''
-        if  :
-            event['local_context'] = 'UU'
-        if  :
-            event['local_context'] = 'SU'
-        if  :
-            event['local_context'] = 'US'
-        if  :
-            event['local_context'] = 'SS'
-        '''
 
-        # Stimulus side (top or bottom)
-        ## uh oh, this isn't coded directly in the ttls, so we would need the
-        ## behavioral structure if we want to make this contrast
-        # XXX JRK : "Damned" oh well, not the end of the world.
+        N1_trigger = events[ii-1, 2] % (2 ** 15)
+        N1_trigger_stim = N1_trigger % 64
+        N1_trigger_motor2 = N1_trigger % 1024 - trigger_stim
+
+        N2_trigger = events[ii-2, 2] % (2 ** 15)
+        N2_trigger_stim = N2_trigger % 64
+        N2_trigger_motor2 = N2_trigger % 1024 - trigger_stim
+
+        if ((N1_trigger_motor2 <= (2 ** 7)) and (N2_trigger_motor2 <= (2 ** 7))):
+            event['local_context'] = 'UU'
+        elif ((N1_trigger_motor2 > (2 ** 7)) and (N2_trigger_motor2 <= (2 ** 7))):
+            event['local_context'] = 'SU'
+        elif ((N1_trigger_motor2 <= (2 ** 7)) and (N2_trigger_motor2 > (2 ** 7))):
+            event['local_context'] = 'US'
+        elif ((N1_trigger_motor2 > (2 ** 7)) and (N2_trigger_motor2 > (2 ** 7))):
+            event['local_context'] = 'SS'
+
 
         events_data_frame.append(event)
 
