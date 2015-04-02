@@ -44,7 +44,14 @@ for subject in subjects:
         epochs = mne.read_epochs(epo_fname)
         # Get events specific to epoch definition (stim or motor lock)
         events = get_events(epochs.events)
-
+        print(sum(events['pas']==0))
+        print(sum(events['pas']==1))
+        print(sum(events['pas']==2))
+        print(sum(events['pas']==3))
+        print(sum(events['local_context'] =='UU'))
+        print(sum(events['local_context'] =='SU'))
+        print(sum(events['local_context'] =='US'))
+        print(sum(events['local_context'] =='SS'))
         # name of evoked file
         ave_fname = op.join(data_path, 'MEG', subject,
                             '{}-{}-contrasts-ave.fif'.format(ep_name, subject))

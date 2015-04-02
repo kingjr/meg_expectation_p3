@@ -44,7 +44,7 @@ def get_events(events):
     for ii in range(n_events):
         event = dict()
 
-        # Event type: stimulus, 1st or 2nd response
+        # Event type: stimulus, 1st (2AFC) or 2nd (PAS) response
         if events[ii, 2] < (2 ** 15):
             event['type'] = 'stim'
         elif events[ii, 2] < (2 ** 16):
@@ -60,12 +60,9 @@ def get_events(events):
 
 
         # Stimulus category (absent/letter/digit)
-        # XXX JRK: The stim definition should be simplifiable in base 2, to
-        # avoid the possible introduction of errors
 
         # Target present?
-        if trigger_stim in (range(1,5) + range(13,17) + range(25,29) +
-                            range(37,41) + range(49,53)):
+        if trigger_stim in [i * 12 + j for i in range(5) for j in range(1,5)]:
             # 1-4 13-16 25-28 37-40 49-52
             event['present'] = False
             event['target'] = None
@@ -74,17 +71,14 @@ def get_events(events):
             event['present'] = True
 
             # Target type
-            if trigger_stim in (range(5,9) + range(17,21) + range(29,33) +
-                                range(41,45) + range(53,57)):
+            if trigger_stim in [4 + i * 12 + j for i in range(5) for j in range(1,5)]:
                 # 5 7 17-20 29-32 41-44 54 56
                 event['target'] = 'letter'
-            elif trigger_stim in (range(9,13) + range(21,25) + range(33,37) +
-                                  range(45,49) + range(57,60)):
+            elif trigger_stim in [8 + i * 12 + j for i in range(5) for j in range(1,5)]:
                 # 9 11 21-24 33-36 45-48 58 60
                 event['target'] = 'number'
             else:
-                # XXX JRK: Always add else conditions
-                event['target'] = None  # is it an error? Else defined it
+                event['target'] = None
 
             # SOA for target-present trials
             if trigger_stim in range (5,13):
@@ -103,20 +97,16 @@ def get_events(events):
                 # 54,56,58,60 (can be 53-60)
                 event['soa'] = 83
             else:
-                event['soa'] = None  # XXX JRK:
+                event['soa'] = None
 
         # Forced_choice response (which right hand finger corresponds to letter
         # response)
-        if trigger_stim in [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26,
-                            29, 30, 33, 34, 37, 38, 41, 42, 45, 46, 49, 50, 53,
-                            54, 57, 58]:
+        if (np.binary_repr(trigger_stim,width=2)[-2]!=np.binary_repr(trigger_stim,width=2)[-1]):
             event['letter_resp'] = 'left'
-        elif trigger_stim in [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27,
-                            28, 31, 32, 35, 36, 39, 40, 43, 44, 47, 48, 51, 52,
-                            55, 56, 59, 60]:
+        elif (np.binary_repr(trigger_stim,width=2)[-2]==np.binary_repr(trigger_stim,width=2)[-1]):
             event['letter_resp'] = 'right'
         else:
-            event['letter_resp'] = None # XXX JRK : check?
+            event['letter_resp'] = None
 
         # motor response
         if trigger_motor1 == (2 ** 13):
@@ -127,7 +117,6 @@ def get_events(events):
             event['motor1'] = None
 
         # Accuracy
-        # XXX JRK Check what I did, I try to simply but I'm not 100% sure
         if event['motor1'] is not None:
             event['missed_m1'] = False
             if event['target'] == 'letter':
@@ -154,8 +143,23 @@ def get_events(events):
             event['pas'] = 3
         else:
             event['missed_m2'] = True
-            event['pas'] = None  # XXX JRK:
+            event['pas'] = None
 
+        # Seen/Unseen (0,1 vs. 2,3)
+        if event['pas'] < 2:
+            event['seen'] = 0
+        elif event['pas'] > 1:
+            event['seen'] = 1
+        else:
+            event['seen'] = None
+
+        # Seen/Unseen (0 vs. 1,2,3)
+        if event['pas'] < 1:
+            event['seen_2'] = 0
+        elif event['pas'] > 0:
+            event['seen_2'] = 1
+        else:
+            event['seen_2'] = None
 
         # Block
         if ((trigger_stim % 2) == 1):
@@ -165,31 +169,33 @@ def get_events(events):
             #even numbers
             event['block'] = 'visible'
         else:
-            event['block'] = None # XXX JRK : check
+            event['block'] = None
 
 
         # Local context
-
         N1_trigger = events[ii-1, 2] % (2 ** 15)
         N1_trigger_stim = N1_trigger % 64
-        N1_trigger_motor2 = N1_trigger % 1024 - trigger_stim
+        N1_trigger_motor2 = N1_trigger % 1024 - trigger_stim # PAS response for N-1
 
         N2_trigger = events[ii-2, 2] % (2 ** 15)
         N2_trigger_stim = N2_trigger % 64
-        N2_trigger_motor2 = N2_trigger % 1024 - trigger_stim
+        N2_trigger_motor2 = N2_trigger % 1024 - trigger_stim # PAS response for N-2
 
-        if ((N1_trigger_motor2 <= (2 ** 7)) and (N2_trigger_motor2 <= (2 ** 7))):
-            event['local_context'] = 'UU'
-        elif ((N1_trigger_motor2 > (2 ** 7)) and (N2_trigger_motor2 <= (2 ** 7))):
-            event['local_context'] = 'SU'
-        elif ((N1_trigger_motor2 <= (2 ** 7)) and (N2_trigger_motor2 > (2 ** 7))):
-            event['local_context'] = 'US'
-        elif ((N1_trigger_motor2 > (2 ** 7)) and (N2_trigger_motor2 > (2 ** 7))):
-            event['local_context'] = 'SS'
+        if (N1_trigger_motor2 <= (2 ** 7)):
+            if (N2_trigger_motor2 <= (2 ** 7)):
+                event['local_context'] = 'UU'
+            elif (N2_trigger_motor2 > (2 ** 7)):
+                event['local_context'] = 'US'
+        elif (N1_trigger_motor2 > (2 ** 7)):
+            if (N2_trigger_motor2 <= (2 ** 7)):
+                event['local_context'] = 'SU'
+            elif (N2_trigger_motor2 > (2 ** 7)):
+                event['local_context'] = 'SS'
+        else:
+            event['local_context'] = None
 
 
         events_data_frame.append(event)
-
     return pd.DataFrame(events_data_frame)
 
 def extract_events(raw):
