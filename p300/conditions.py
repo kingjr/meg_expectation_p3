@@ -147,17 +147,17 @@ def get_events(events):
 
         # Seen/Unseen (0,1 vs. 2,3)
         if event['pas'] < 2:
-            event['seen'] = 0
+            event['seen'] = True
         elif event['pas'] > 1:
-            event['seen'] = 1
+            event['seen'] = False
         else:
             event['seen'] = None
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
-            event['seen_2'] = 0
+            event['seen_2'] = True
         elif event['pas'] > 0:
-            event['seen_2'] = 1
+            event['seen_2'] = False
         else:
             event['seen_2'] = None
 
@@ -203,8 +203,8 @@ def extract_events(raw):
     triggers, find the two following motor responses, and combined their trigger
     values to know that they go in triplets."""
 
-    events = mne.find_events(raw, stim_channel='STI101', verbose=True,
-                             consecutive='increasing', min_duration=0.003)
+    events = mne.find_events(raw, stim_channel = 'STI101', verbose = False,
+                                consecutive ='increasing',min_duration=0.001)
 
     # Define stim and motor triggers
     stim  = range(1, 64)
@@ -229,7 +229,7 @@ def extract_events(raw):
         # stimulus and motor information in each event.
         combined = events[s, 2] + events[inds[0], 2] + events[inds[1], 2]
 
-        # Add ttl value to explicitely differentiate the three events
+        # Add ttl value to explicitly differentiate the three events
         extra_ttl = 2 ** (np.log2(np.max(motor + stim)) + 1)
         # 1st: stim
         new_events.append([events[s, 0], 0, combined + 0 * extra_ttl])
@@ -237,5 +237,4 @@ def extract_events(raw):
         new_events.append([events[inds[0], 0], 0, combined + 1 * extra_ttl])
         # 3rd: second motor response
         new_events.append([events[inds[1], 0], 0, combined + 2 * extra_ttl])
-
     return np.array(new_events)

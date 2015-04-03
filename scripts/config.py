@@ -76,14 +76,14 @@ if not op.exists(results_dir):
 ch_types_used = ['meg', 'eeg']
 
 # ICA ##########################################################################
-use_ica = True
+use_ica = False
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'
 n_max_ecg = 4
 n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
-ica_decim = 75
+ica_decim = 50
 
 # EVENTS #######################################################################
 

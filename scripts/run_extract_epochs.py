@@ -80,7 +80,9 @@ for subject in subjects:
         # Epoch data for each epoch type
         for ep, epochs_list in zip(epochs_params, all_epochs):
             # Select events
-            sel = events_select_condition(events[:,2], ep['events'])
+            # sel = events_select_condition(events[:,2], ep['events'])
+
+            sel = events_select_condition(events[:,2], 'letter')
             events_sel = events[sel,:]
 
             # Only keep parameters applicable to mne.Epochs()
@@ -92,6 +94,10 @@ for subject in subjects:
             # Epoch raw data
             epochs = mne.Epochs(raw=raw, picks=picks, preload=True,
                                 events=events_sel, **ep_epochs)
+
+            epochs_letters = mne.Epochs(raw=raw, picks=picks, preload=True,
+                                events=events_sel, **ep_epochs)
+
 
             # Redefine t0 if necessary
             if 'time_shift' in ep.keys():

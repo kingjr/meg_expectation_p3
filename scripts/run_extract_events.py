@@ -7,6 +7,8 @@ import os.path as op
 
 import mne
 
+import numpy as np
+
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import extract_events
