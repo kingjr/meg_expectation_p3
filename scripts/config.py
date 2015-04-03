@@ -83,7 +83,7 @@ n_components = 'rank'
 n_max_ecg = 4
 n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
-ica_decim = 50
+ica_decim = 75
 
 # EVENTS #######################################################################
 
