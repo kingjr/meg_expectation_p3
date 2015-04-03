@@ -125,7 +125,7 @@ def get_events(events):
                 event['correct'] = event['letter_resp'] != event['motor1']
         else:
             event['missed_m1'] = True
-            event['correct'] = False
+            event['correct'] = None # we want to differentiate between incorrect and no answer
 
         # PAS
         event['missed_m2'] = False

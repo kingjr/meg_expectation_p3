@@ -4,8 +4,8 @@ import os.path as op
 # PATHS ########################################################################
 base_path = op.dirname(op.dirname(__file__))
 
-#data_path = op.join(base_path, 'data')
-data_path = '/Volumes/INSERM/data'
+data_path = op.join(base_path, 'data')
+#data_path = '/Volumes/INSERM/data'
 
 pass_errors = False
 
@@ -46,7 +46,7 @@ exclude_subjects = []
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
-runs = list(range(1, 5))  # number of runs per subject
+runs = list(range(1, 2))  # number of runs per subject
 
 # FILRERING ####################################################################
 lowpass = 35
