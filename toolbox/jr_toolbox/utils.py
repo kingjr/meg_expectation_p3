@@ -348,7 +348,7 @@ class cluster_stat(dict):
         return fig
 
 
-def find_in_df(df, include, exclude=list(), max_n=np.inf):
+def find_in_df(df, include, exclude=dict(), max_n=np.inf):
     """Find instance in pd.dataFrame that correspond to include and exlcuding
     criteria.
 
