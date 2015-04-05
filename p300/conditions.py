@@ -204,7 +204,9 @@ def extract_events(raw):
     values to know that they go in triplets."""
 
     events = mne.find_events(raw, stim_channel='STI101', verbose=True,
-                             consecutive='increasing', min_duration=0.003)
+                             consecutive='increasing', min_duration=0.000,
+                             shortest_event=1) # XXX ISSUE WITH MISSING TRIGGER
+                                               # IN ABSENT TRIAL
 
     # Define stim and motor triggers
     stim  = range(1, 64)
