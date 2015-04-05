@@ -11,6 +11,8 @@ from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from p300.conditions import get_events
 
+from toolbox.jr_toolbox.utils import find_in_df
+
 from config import (
     data_path,
     subjects,
@@ -54,18 +56,15 @@ for subject in subjects:
         for contrast in contrasts:
             evokeds = list()
 
-            # Find excluded trials
-            exclude = np.any([events[x['cond']]==ii
-                                for x in contrast['exclude']
-                                    for ii in x['values']],
-                             axis=0)
-
+            # Find trials
+            sel = find_in_df(events, contrast['include'], contrast['exclude'])
             # Select condition
-            for value in contrast['include']['values']:
+            key = contrast['include'].keys()[0]
+            for value in contrast['include'][key]:
                 # Find included trials
-                include = events[contrast['include']['cond']]==value
+                subsel = [sel[i] for i in np.where(events[key][sel]==value)[0]]
                 # Evoked data
-                evoked = epochs[include * (exclude==False)].average()
+                evoked = epochs[subsel].average()
                 evoked.comment = contrast['name']+str(value)
                 # keep for contrast
                 evokeds.append(evoked)

@@ -6,6 +6,7 @@ base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
 #data_path = '/Volumes/INSERM/data'
+data_path = '/media/jrking/INSERM/data' # XXX to be changed
 
 pass_errors = False
 
@@ -46,7 +47,7 @@ exclude_subjects = []
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
-runs = list(range(1, 2))  # number of runs per subject
+runs = list(range(1, 5))  # number of runs per subject
 
 # FILRERING ####################################################################
 lowpass = 35
@@ -109,11 +110,11 @@ epochs_params = [epochs_stim, epochs_motor1]
 # Here define your contrast of interest
 contrasts = (
             dict(name='present_absent',
-                 include=dict(cond='present', values=[True, False]),
-                 exclude=[dict(cond='soa', values=[17, 33, 50, 83])]),
+                 include=dict(present=[True, False]),
+                 exclude=dict(soa=[17, 33, 50, 83])),
             dict(name='motor1_finger',
-                 include=dict(cond='motor1', values=['left', 'right']),
-                 exclude=[dict(cond='missed_m1', values=[True])]),
+                 include=dict(motor1=['left', 'right']),
+                 exclude=[dict(missed_m1=True)]),
             )
 
 
@@ -139,3 +140,9 @@ decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
 clu_sigma = 1e3
 clu_n_permutations = 1024
 clu_threshold = 0.05
+
+
+# TO RUN TESTS
+subjects = [subjects[0]]
+# runs = [runs[0]]
+use_ica = False
