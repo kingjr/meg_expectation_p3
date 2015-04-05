@@ -67,6 +67,18 @@ def get_events(events):
             event['present'] = False
             event['target'] = None
             event['soa'] = None
+            if trigger_stim in range(1, 5):
+                event['soa_ttl'] = 17
+            elif trigger_stim in range(13, 17):
+                event['soa_ttl'] = 33
+            elif trigger_stim in range(25, 29):
+                event['soa_ttl'] = 50
+            elif trigger_stim in range(37, 41):
+                event['soa_ttl'] = 67
+            elif trigger_stim in range(49, 53):
+                event['soa_ttl'] = 83
+            else:
+                event['soa_ttl'] = None
         else:
             event['present'] = True
 
@@ -98,6 +110,8 @@ def get_events(events):
                 event['soa'] = 83
             else:
                 event['soa'] = None
+
+            event['soa_ttl'] = event['soa']
 
         # Forced_choice response (which right hand finger corresponds to letter
         # response)
