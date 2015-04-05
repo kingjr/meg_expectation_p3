@@ -41,8 +41,6 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
 # s14_ac130389, s17_ft120490 have two sss for certain blocks
 # XXX JRK: This should be solvable!
 
-subjects = ['s23_pf120155'] # For now, only run on on subject
-
 exclude_subjects = []
 
 subjects = [s for s in subjects if s not in exclude_subjects]
@@ -143,6 +141,6 @@ clu_threshold = 0.05
 
 
 # TO RUN TESTS
-subjects = [subjects[0]]
+# subjects = [subjects[0]]
 # runs = [runs[0]]
 use_ica = False
