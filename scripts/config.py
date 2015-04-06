@@ -129,13 +129,10 @@ contrasts = (
                  include=dict(seen_X_soa=[seen + str(soa)
                                 for seen in ['seen_', 'unseen_']
                                     for soa in [17, 33, 50, 67, 83]]),
-                exclude=dict()),
-            dict(name='motor1_finger',
-                 include=dict(motor1=['left', 'right']),
-                 exclude=[dict(missed_m1=True)]),
+                exclude=dict())
             )
 
-
+epochs_contrasts = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
 # DECODING #####################################################################
 # preprocessing for memory
 decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
@@ -160,7 +157,7 @@ clu_n_permutations = 1024
 clu_threshold = 0.05
 
 
-# TO RUN TESTS
-subjects = [subjects[0]]
-# runs = [runs[0]]
-use_ica = False
+# TO RUN TESTS #################################################################
+use_ica = False # XXX deal with bad chan first
+exclude_subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
+                    's15_nv110179'] # maxfilter error + already done subjects

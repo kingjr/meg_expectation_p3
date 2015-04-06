@@ -104,5 +104,5 @@ for subject in subjects:
     epochs.tmax = max(epochs.times)
     # save to new epochs
     unmasked_fname = op.join(data_path, 'MEG', subject,
-            '{}-{}-unmasked-ave.fif'.format(ep['name'], subject))
+            '{}-unmasked-{}-epo.fif'.format(ep['name'], subject))
     epochs.save(unmasked_fname)

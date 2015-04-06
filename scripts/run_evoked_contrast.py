@@ -22,7 +22,7 @@ from config import (
     subjects,
     results_dir,
     events_fname_filt_tmp,
-    epochs_params,
+    epochs_contrasts,
     open_browser,
     contrasts,
     ch_types_used,
@@ -42,8 +42,8 @@ for subject in subjects:
 
 
     # Apply contrast on each type of epoch
-    all_epochs = [[]] * len(epochs_params)
-    for epoch_params in epochs_params:
+    all_epochs = [[]] * len(epochs_contrasts)
+    for epoch_params in epochs_contrasts:
         ep_name = epoch_params['name']
 
         # Get MEG data
