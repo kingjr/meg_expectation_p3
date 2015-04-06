@@ -106,12 +106,11 @@ for subject in subjects:
                     picks = [i for k, p in picks_by_type(evoked.info) for i in p
                                                         if k in chan_type['name']]
                     mM = abs(np.percentile(delta.data[picks,:], 99.))
-                    ax_ind = e * len(chan_types)+ ch
+                    ax_ind = e * len(chan_types) + ch
                     ax[ax_ind].imshow(delta.data[picks,:], vmin=-mM, vmax=mM,
                                       interpolation='none', aspect='auto',
                                       cmap='RdBu_r', extent=[min(delta.times),
-                                               max(delta.times), 0, len(picks)]
-                                       )
+                                          max(delta.times), 0, len(picks)])
                     ax[ax_ind].plot([0, 0], [0, len(picks)], color='black')
                     ax[ax_ind].set_title(chan_type['name'] + ': ' +
                                          str(contrast['include'][key][e]))
@@ -125,7 +124,7 @@ for subject in subjects:
             # Topo
             plot_times = np.linspace(avg.times.min(), avg.times.max(), 10)
             delta = evokeds[-1] - avg
-            fig = delta.plot_topomap(plot_times, chan_type='mag', sensors=False,
+            fig = delta.plot_topomap(plot_times, ch_type='mag', sensors=False,
                                     contours=False)
             report.add_figs_to_section(fig, ('%s (%s) %s: (topo)'
                 % (subject, ep_name, contrast['name'])), contrast['name'])
