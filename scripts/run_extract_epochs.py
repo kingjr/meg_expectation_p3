@@ -137,7 +137,7 @@ for subject in subjects:
                                    'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,
                           (epochs.tmax - epochs.tmin) / 20)
-        fig = evoked.plot_topomap(times, chan_type='mag')
+        fig = evoked.plot_topomap(times, ch_type='mag')
         report.add_figs_to_section(fig, '%s (%s): topo' % (subject, name),
                                    'Topo: ' + name)
 
