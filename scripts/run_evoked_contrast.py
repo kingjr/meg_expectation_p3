@@ -1,6 +1,10 @@
+import copy
+import warnings
 import os.path as op
 import numpy as np
-import warnings
+import matplotlib.pyplot as plt
+from scipy.stats import linregress
+
 import mne
 from mne.io import Raw
 from mne.io.pick import _picks_by_type as picks_by_type
@@ -21,8 +25,10 @@ from config import (
     epochs_params,
     open_browser,
     contrasts,
+    ch_types_used,
 )
 
+ch_types_used = ['mag', 'grad'] + [i for i in ch_types_used if i != 'meg']
 
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
@@ -76,19 +82,49 @@ for subject in subjects:
                 warnings.warn('%s: no epochs in %s for %s' % (subject, ep_name,
                                                               contrast['name']))
                 continue
-            diff = evokeds[0] - evokeds[-1]
+
+            avg = copy.deepcopy(evokeds[0])
+            avg.data *= 0.
+            # if only two condition, only plot the difference between the two
+            if len(evokeds) == 2:
+                avg.data = evokeds[0].data
+                evokeds = [evokeds[1]]
+            else:
+                # else plot all conditions - average across conditions
+                for e in evokeds:
+                    avg.data = avg.data + e.data / len(evokeds)
 
             # Plot
-            fig = diff.plot()
-            report.add_figs_to_section(fig, ('%s (%s) %s: butterfly'
-                % (subject, ep_name, diff.comment)), 'Butterfly: ' + ep_name)
-            plot_times = np.linspace(diff.times.min(),
-                                     diff.times.max(),
-                                     10)
-            fig = diff.plot_topomap(plot_times, ch_type='mag', sensors=False,
+            fig, ax = plt.subplots(len(evokeds), len(ch_types_used))
+            ax = np.reshape(ax, len(evokeds) * len(ch_types_used))
+            for e, evoked in enumerate(evokeds):
+                for ch, ch_type in enumerate(ch_types_used):
+                    delta = copy.deepcopy(evoked) - copy.deepcopy(avg)
+                    picks = [i for k, p in picks_by_type(evoked.info) for i in p
+                                                            if k in ch_type]
+                    mM = abs(np.percentile(delta.data[picks,:], 99.))
+                    ax_ind = e * len(ch_types_used)+ ch
+                    ax[ax_ind].imshow(delta.data[picks,:], vmin=-mM, vmax=mM,
+                                      interpolation='none', aspect='auto',
+                                      cmap='RdBu_r', extent=[min(delta.times),
+                                               max(delta.times), 0, len(picks)]
+                                       )
+                    ax[ax_ind].plot([0, 0], [0, len(picks)], color='black')
+                    ax[ax_ind].set_title(ch_type + ': ' + str(contrast['include'][key][e]))
+                    ax[ax_ind].set_xlabel('Time')
+                    ax[ax_ind].set_adjustable('box-forced')
+                    ax[ax_ind].autoscale(False)
+
+            report.add_figs_to_section(fig, ('%s (%s) %s'
+                % (subject, ep_name, contrast['name'])), contrast['name'])
+
+            # Topo
+            plot_times = np.linspace(avg.times.min(), avg.times.max(), 10)
+            delta = evokeds[-1] - avg
+            fig = delta.plot_topomap(plot_times, ch_type='mag', sensors=False,
                                     contours=False)
             report.add_figs_to_section(fig, ('%s (%s) %s: (topo)'
-                % (subject, ep_name, diff.comment)), 'Topo: ' + ep_name)
+                % (subject, ep_name, contrast['name'])), contrast['name'])
 
         # Save all_evokeds
         mne.write_evokeds(ave_fname, all_evokeds)
