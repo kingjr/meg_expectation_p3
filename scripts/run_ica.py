@@ -25,7 +25,7 @@ from config import (
     ica_reject,
     ica_decim,
     open_browser,
-    ch_types_used
+    chan_types
 )
 
 report, run_id, results_dir, logger = setup_provenance(
@@ -51,15 +51,15 @@ for subject in subjects:
 
     set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
 
-    for ch_type, picks in picks_by_type(raw.info, meg_combined=True):
-        if ch_type not in ch_types_used:
+    for chan_type, picks in picks_by_type(raw.info, meg_combined=True):
+        if chan_type not in [i['name'] for i in chan_types]:
             continue
         ica, _ = compute_ica(
             raw, picks=picks, subject=subject, n_components=n_components,
             n_max_ecg=n_max_ecg, n_max_eog=n_max_eog, reject=ica_reject,
             decim=ica_decim / decim_, report=report)
         ica.save(
-            op.join(this_path, '{}-ica.fif'.format(ch_type)))
+            op.join(this_path, '{}-ica.fif'.format(chan_type)))
     del raw
 
 # XXX NOT CONVERGING FOR SUBJECT01 ASK DENIS + MEMORY ERROR
