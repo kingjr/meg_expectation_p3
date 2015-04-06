@@ -159,21 +159,22 @@ def get_events(events):
             event['missed_m2'] = True
             event['pas'] = None
 
-        # Seen/Unseen (0,1 vs. 2,3)
-        if event['pas'] < 2:
-            event['seen'] = 0
-        elif event['pas'] > 1:
-            event['seen'] = 1
-        else:
-            event['seen'] = None
+        # XXX Define this only when you'll analyze it 
+        # # Seen/Unseen (0,1 vs. 2,3)
+        # if event['pas'] < 2:
+        #     event['seen'] = 0
+        # elif event['pas'] > 1:
+        #     event['seen'] = 1
+        # else:
+        #     event['seen'] = None
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
-            event['seen_2'] = 0
+            event['seen'] = False
         elif event['pas'] > 0:
-            event['seen_2'] = 1
+            event['seen'] = True
         else:
-            event['seen_2'] = None
+            event['seen'] = None
 
         # Block
         if ((trigger_stim % 2) == 1):
