@@ -32,26 +32,22 @@ if 'meg' in [i['name'] for i in chan_types]:
     chan_types = [dict(name='mag'), dict(name='grad')] + \
                  [dict(name=i['name']) for i in chan_types
                                            if i['name'] != 'meg']
+# only run on stim lock
+ep_name = 'stim_lock'
 
 # loop across subjects
 for subject in subjects:
-
-    # loop across epoch type: stim [and response lock? maybe not, or for later]
-    ep = epochs_params[0]
-
-
-    # PART 1. Get MEG data ##############################################
     # Load data
     epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(ep['name'], subject))
+                        '{}-{}-epo.fif'.format(ep_name, subject))
     epochs = mne.read_epochs(epo_fname)
+    sfreq = epochs.info['sfreq']
 
     # # Get events specific to epoch definition (stim or motor lock)
     events = get_events(epochs.events)
 
     # Apply each contrast and Realign
     # NB: The TTL setup has different SOA between trigger & mask: realign necessary
-    sfreq = epochs.info['sfreq']
     n_time = len(epochs.times)
     evokeds_abs, evokeds_pst = list(), list()
     soas = [17, 33, 50, 67, 83]
@@ -120,10 +116,11 @@ for subject in subjects:
         # report.add_figs_to_section(fig, subject + chan_type['name'], subject)
 
 
+
     ############################################################################
     # Save
     ave_fname = op.join(data_path, 'MEG', subject,
-            '{}-{}-mask-ave.fif'.format(ep['name'], subject))
+            '{}-{}-mask-ave.fif'.format(ep_name, subject))
 
     mne.write_evokeds(ave_fname, [template_pst, template_abs])
 

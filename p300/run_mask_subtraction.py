@@ -33,21 +33,27 @@ if 'meg' in [i['name'] for i in chan_types]:
                  [dict(name=i['name']) for i in chan_types
                                            if i['name'] != 'meg']
 
-# Part 2. load all epochs ##############################################
+# only run on stim lock
+ep_name = 'stim_lock'
+
+# loop across subjects
 for subject in subjects:
     epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(ep['name'], subject))
+                        '{}-{}-epo.fif'.format(ep_name, subject))
     epochs = mne.read_epochs(epo_fname)
+    sfreq = epochs.info['sfreq']
     events = get_events(epochs.events)
     # load mask
     mask_fname = op.join(data_path, 'MEG', subject,
-            '{}-{}-mask-ave.fif'.format(ep['name'], subject))
+            '{}-{}-mask-ave.fif'.format(ep_name, subject))
     template = mne.read_evokeds(mask_fname, 'absent')
 
     # remove template from individual epochs
     n_epoch, n_all_chan, n_time = epochs._data.shape
     n_data_chan, n_time_template = template.data.shape
     data = np.zeros((n_epoch, n_data_chan, n_time_template))
+    # loop across soas
+    soas = [17, 33, 50, 67, 83]
     for soa in soas:
         sel = find_in_df(events, dict(soa_ttl=soa))
         for trial in sel:
@@ -60,7 +66,7 @@ for subject in subjects:
     epochs.tmax = max(epochs.times)
     # save to new epochs
     unmasked_fname = op.join(data_path, 'MEG', subject,
-            '{}-unmasked-{}-epo.fif'.format(ep['name'], subject))
+            '{}-unmasked-{}-epo.fif'.format(ep_name, subject))
     epochs.save(unmasked_fname)
 
 report.save(open_browser=open_browser)
