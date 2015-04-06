@@ -159,7 +159,7 @@ def get_events(events):
             event['missed_m2'] = True
             event['pas'] = None
 
-        # XXX Define this only when you'll analyze it 
+        # XXX Define this only when you'll analyze it
         # # Seen/Unseen (0,1 vs. 2,3)
         # if event['pas'] < 2:
         #     event['seen'] = 0
@@ -188,26 +188,32 @@ def get_events(events):
 
 
         # Local context
-        N1_trigger = events[ii-1, 2] % (2 ** 15)
-        N1_trigger_stim = N1_trigger % 64
-        N1_trigger_motor2 = N1_trigger % 1024 - trigger_stim # PAS response for N-1
-
-        N2_trigger = events[ii-2, 2] % (2 ** 15)
-        N2_trigger_stim = N2_trigger % 64
-        N2_trigger_motor2 = N2_trigger % 1024 - trigger_stim # PAS response for N-2
-
-        if (N1_trigger_motor2 <= (2 ** 7)):
-            if (N2_trigger_motor2 <= (2 ** 7)):
-                event['local_context'] = 'UU'
-            elif (N2_trigger_motor2 > (2 ** 7)):
-                event['local_context'] = 'US'
-        elif (N1_trigger_motor2 > (2 ** 7)):
-            if (N2_trigger_motor2 <= (2 ** 7)):
-                event['local_context'] = 'SU'
-            elif (N2_trigger_motor2 > (2 ** 7)):
-                event['local_context'] = 'SS'
+        # XXX should have crashed here before??
+        if ii > 1:
+            seen1 = event['seen'][-1]
+            if seen1==True:
+                event['local_context'] = 'S'
+            elif seen1==False:
+                event['local_context'] = 'U'
+            else:
+                event['local_context'] = None
         else:
             event['local_context'] = None
+
+        if ii > 2:
+            seen2 = events_data_frame['seen'][-2]
+            if seen1==True and seen2==True:
+                event['local_context2'] = 'SS'
+            elif seen1==True and seen2==False:
+                event['local_context2'] = 'SU'
+            elif seen1==False and seen2==True:
+                event['local_context2'] = 'US'
+            elif seen1==False and seen2==False:
+                event['local_context2'] = 'UU'
+            else:
+                event['local_context2'] = None
+        else:
+            event['local_context2'] = None
 
 
         events_data_frame.append(event)
