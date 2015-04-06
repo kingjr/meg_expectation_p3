@@ -23,8 +23,8 @@ from scripts.config import (
 )
 
 
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+# report, run_id, results_dir, logger = setup_provenance(
+#     script=__file__, results_dir=results_dir)
 
 
 # force separation of magnetometers and gradiometers
@@ -54,7 +54,6 @@ for subject in subjects:
     sfreq = epochs.info['sfreq']
     n_time = len(epochs.times)
     evokeds_abs, evokeds_pst = list(), list()
-
     soas = [17, 33, 50, 67, 83]
     for s, soa in enumerate(soas):
         # find absent trials
@@ -68,11 +67,11 @@ for subject in subjects:
                                                        / 1000)).astype(int)
 
         evoked_abs.data = evoked_abs.data[:, toi]
-        evoked_abs.times = evoked_abs.times[toi]
+        evoked_abs.times = evoked_abs.times[0:len(toi)]
         evokeds_abs.append(evoked_abs)
 
-        evoked_pst.data = evoked_pst.data[:, toi]
-        evoked_pst.times = evoked_pst.times[toi]
+        evoked_pst.data = evoked_pst.data[:, 0:len(toi)]
+        evoked_pst.times = evoked_pst.times[0:len(toi)]
         evokeds_pst.append(evoked_pst)
 
     # Create templates
@@ -85,13 +84,11 @@ for subject in subjects:
     template_pst = avg2epo(evokeds_pst).average(picks=picks)
     template_pst.comment = 'present'
 
-
     ############################################################################
     # Plot
     # color min max from average
-    mM = abs(np.percentile(template_pst.data[picks,:], 97.))
     # generic plotting function
-    imshow = lambda ax, ep, picks: ax.imshow(ep.data[picks, :], vmin=-mM,
+    imshow = lambda ax, ep, picks, mM: ax.imshow(ep.data[picks, :], vmin=-mM,
                                              vmax=mM, interpolation='none',
                                              aspect='auto', cmap='RdBu_r',
                                             extent=[min(ep.times),
@@ -103,22 +100,24 @@ for subject in subjects:
         # select channels
         picks = [i for k, p in picks_by_type(template_pst.info) for i in p
                                             if k in chan_type['name']]
+        mM = abs(np.percentile(template_pst.data[picks,:], 99.))
         # figure soas x [(target mask), mask only, (target & mask) - mask]
         fig, axes = plt.subplots(len(soas) + 1, 3)
         # each line corresponds to a soa
         for s, soa in enumerate(soas):
-            imshow(axes[s, 0], evokeds_pst[s], picks)
-            imshow(axes[s, 1], evokeds_abs[s], picks)
-            imshow(axes[s, 2], evokeds_pst[s] - evokeds_abs[s], picks)
+            imshow(axes[s, 0], evokeds_pst[s], picks, mM)
+            imshow(axes[s, 1], evokeds_abs[s], picks, mM)
+            # XXX Note that there are different scales depending on the number
+            # of trials
+            imshow(axes[s, 2], evokeds_pst[s] - template_abs, picks, mM)
 
         # plot average mask
         s = len(soas)
-        imshow(axes[s, 0], template_pst, picks)
-        imshow(axes[s, 1], template_abs, picks)
-        imshow(axes[s, 2], template_pst - template_abs, picks)
+        imshow(axes[s, 0], template_pst, picks, mM)
+        imshow(axes[s, 1], template_abs, picks, mM)
+        imshow(axes[s, 2], template_pst - template_abs, picks, mM)
 
-        report.add_figs_to_section(fig, subject + chan_type['name'], subject)
-
+        # report.add_figs_to_section(fig, subject + chan_type['name'], subject)
 
 
     ############################################################################
@@ -128,4 +127,4 @@ for subject in subjects:
 
     mne.write_evokeds(ave_fname, [template_pst, template_abs])
 
-report.save(open_browser=open_browser)
+# report.save(open_browser=open_browser)
