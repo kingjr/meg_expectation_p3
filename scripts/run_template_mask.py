@@ -7,6 +7,8 @@ from mne.io.pick import _picks_by_type as picks_by_type
 
 from toolbox.jr_toolbox.utils import find_in_df, Evokeds_to_Epochs
 
+from meeg_preprocessing.utils import setup_provenance
+
 from p300.conditions import get_events
 
 from scripts.config import (
@@ -19,7 +21,10 @@ from scripts.config import (
 )
 
 
-# XXX to be imported from config:
+report, run_id, results_dir, logger = setup_provenance(
+    script=__file__, results_dir=results_dir)
+
+# to be imported from config:
 soas = [17, 33, 50, 67, 83]
 
 # loop across subjects
@@ -71,7 +76,7 @@ for subject in subjects:
     template.comment = 'mask'
     # plot
     ax[-1].matshow(evoked.data[mag, :])
-    plt.show()
+    report.add_figs_to_section(fig, subject, subject)
 
     # Save
     mask_fname = op.join(data_path, 'MEG', subject,
@@ -106,3 +111,5 @@ for subject in subjects:
     unmasked_fname = op.join(data_path, 'MEG', subject,
             '{}-unmasked-{}-epo.fif'.format(ep['name'], subject))
     epochs.save(unmasked_fname)
+
+report.save(open_browser=open_browser)
