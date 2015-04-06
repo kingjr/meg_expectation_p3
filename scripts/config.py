@@ -41,7 +41,7 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
 # s14_ac130389, s17_ft120490 have two sss for certain blocks
 # XXX JRK: This should be solvable!
 
-exclude_subjects = []
+exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
@@ -109,7 +109,27 @@ epochs_params = [epochs_stim, epochs_motor1]
 contrasts = (
             dict(name='present_absent',
                  include=dict(present=[True, False]),
-                 exclude=dict(soa=[17, 33, 50, 83])),
+                 exclude=dict()),
+            dict(name='seen_unseen',
+                 include=dict(seen=[True, False]),
+                 exclude=dict()),
+            dict(name='pas',
+                 include=dict(pas=[0, 1, 2, 3]),
+                 exclude=dict()),
+            dict(name='global',
+                 include=dict(block=['visible', 'invisible']),
+                 exclude=dict(soa=[17, 83])),
+            dict(name='local',
+                 include=dict(local_context=['S', 'U']),
+                 exclude=dict()),
+            dict(name='soa',
+                 include=dict(soa=[17, 33, 50, 67, 83]),
+                 exclude=dict()),
+            dict(name='seen_X_soa',
+                 include=dict(seen_X_soa=[seen + str(soa)
+                                for seen in ['seen_', 'unseen_']
+                                    for soa in [17, 33, 50, 67, 83]]),
+                exclude=dict()),
             dict(name='motor1_finger',
                  include=dict(motor1=['left', 'right']),
                  exclude=[dict(missed_m1=True)]),
@@ -141,6 +161,6 @@ clu_threshold = 0.05
 
 
 # TO RUN TESTS
-# subjects = [subjects[0]]
+subjects = [subjects[0]]
 # runs = [runs[0]]
 use_ica = False

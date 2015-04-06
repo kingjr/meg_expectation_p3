@@ -176,6 +176,15 @@ def get_events(events):
         else:
             event['seen'] = None
 
+        # Interaction seen SOA
+        # XXX Should find to way to make interactions automatically
+        if event['seen'] == True:
+            event['seen_X_soa'] = 'seen_' + str(event['soa'])
+        elif event['seen'] == False:
+            event['seen_X_soa'] = 'unseen_' + str(event['soa'])
+        else:
+            event['seen_X_soa'] = None
+
         # Block
         if ((trigger_stim % 2) == 1):
             #odd numbers
@@ -186,11 +195,9 @@ def get_events(events):
         else:
             event['block'] = None
 
-
         # Local context
-        # XXX should have crashed here before??
         if ii > 1:
-            seen1 = event['seen'][-1]
+            seen1 = events_data_frame[-1]['seen']
             if seen1==True:
                 event['local_context'] = 'S'
             elif seen1==False:
@@ -201,7 +208,7 @@ def get_events(events):
             event['local_context'] = None
 
         if ii > 2:
-            seen2 = events_data_frame['seen'][-2]
+            seen2 = events_data_frame[-2]['seen']
             if seen1==True and seen2==True:
                 event['local_context2'] = 'SS'
             elif seen1==True and seen2==False:
