@@ -165,4 +165,4 @@ use_ica = False # XXX deal with bad chan first
 exclude_subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
                     's15_nv110179'] # maxfilter error + already done subjects
 exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error + already done subjects
-subjects = [subjects[0]]
+# subjects = ['s10_ns110383']

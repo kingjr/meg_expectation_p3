@@ -57,7 +57,9 @@ def get_events(events):
         trigger_stim = trigger % 64
         trigger_motor2 = trigger % 1024 - trigger_stim
         trigger_motor1 = trigger - trigger_stim - trigger_motor2
-
+        event['trigger_stim'] = trigger_stim
+        event['trigger_motor1'] = trigger_motor1
+        event['trigger_motor2'] = trigger_motor2
 
         # Stimulus category (absent/letter/digit)
 
@@ -78,6 +80,7 @@ def get_events(events):
             elif trigger_stim in range(49, 53):
                 event['soa_ttl'] = 83
             else:
+                raise RuntimeError('did not find adequate ttl')
                 event['soa_ttl'] = None
         else:
             event['present'] = True
@@ -90,6 +93,7 @@ def get_events(events):
                 # 9 11 21-24 33-36 45-48 58 60
                 event['target'] = 'number'
             else:
+                raise RuntimeError('did not find adequate ttl')
                 event['target'] = None
 
             # SOA for target-present trials
@@ -109,6 +113,7 @@ def get_events(events):
                 # 54,56,58,60 (can be 53-60)
                 event['soa'] = 83
             else:
+                raise RuntimeError('did not find adequate ttl')
                 event['soa'] = None
 
             event['soa_ttl'] = event['soa']
@@ -193,6 +198,7 @@ def get_events(events):
             #even numbers
             event['block'] = 'visible'
         else:
+            raise RuntimeError('did not find adequate ttl')
             event['block'] = None
 
         # Local context
