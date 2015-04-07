@@ -23,8 +23,8 @@ from scripts.config import (
 )
 
 
-# report, run_id, results_dir, logger = setup_provenance(
-#     script=__file__, results_dir=results_dir)
+report, run_id, results_dir, logger = setup_provenance(script=__file__,
+                                                       results_dir=results_dir)
 
 
 # force separation of magnetometers and gradiometers
@@ -36,7 +36,9 @@ if 'meg' in [i['name'] for i in chan_types]:
 ep_name = 'stim_lock'
 
 # loop across subjects
+all_templates = list()
 for subject in subjects:
+    print(subject)
     # Load data
     epo_fname = op.join(data_path, 'MEG', subject,
                         '{}-{}-epo.fif'.format(ep_name, subject))
@@ -58,6 +60,9 @@ for subject in subjects:
         # find present trials
         sel = find_in_df(events, dict(soa=soa), exclude=dict(present=False))
         evoked_pst = epochs[sel].average(picks=range(len(epochs.ch_names)))
+        # XXX MNE uses trial number as a weight in subtractions
+        evoked_abs.nave = 1
+        evoked_pst.nave = 1
 
         toi = np.arange(soa * sfreq / 1000, n_time - ((83 - soa) * sfreq
                                                        / 1000)).astype(int)
@@ -76,9 +81,13 @@ for subject in subjects:
 
     template_abs = avg2epo(evokeds_abs).average(picks=picks)
     template_abs.comment = 'absent'
+    template_abs.nave = 1 # XXX Stupid MNE
 
     template_pst = avg2epo(evokeds_pst).average(picks=picks)
     template_pst.comment = 'present'
+    template_pst.nave = 1 # XXX Stupid MNE
+
+    all_templates.append([template_abs, template_pst])
 
     ############################################################################
     # Plot
@@ -103,9 +112,8 @@ for subject in subjects:
         for s, soa in enumerate(soas):
             imshow(axes[s, 0], evokeds_pst[s], picks, mM)
             imshow(axes[s, 1], evokeds_abs[s], picks, mM)
-            # XXX Note that there are different scales depending on the number
-            # of trials
             imshow(axes[s, 2], evokeds_pst[s] - template_abs, picks, mM)
+            # imshow(axes[s, 2], evokeds_pst[s] - evokeds_abs[s], picks, mM)
 
         # plot average mask
         s = len(soas)
@@ -113,8 +121,8 @@ for subject in subjects:
         imshow(axes[s, 1], template_abs, picks, mM)
         imshow(axes[s, 2], template_pst - template_abs, picks, mM)
 
-        # report.add_figs_to_section(fig, subject + chan_type['name'], subject)
-
+        report.add_figs_to_section(fig, subject + chan_type['name'], subject)
+    # plt.show()
 
 
     ############################################################################
@@ -124,4 +132,4 @@ for subject in subjects:
 
     mne.write_evokeds(ave_fname, [template_pst, template_abs])
 
-# report.save(open_browser=open_browser)
+report.save(open_browser=open_browser)
