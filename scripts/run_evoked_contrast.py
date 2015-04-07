@@ -15,7 +15,7 @@ from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from p300.conditions import get_events
 
-from toolbox.jr_toolbox.utils import find_in_df
+from toolbox.jr_toolbox.utils import find_in_df, build_contrast, save_to_dict
 
 from config import (
     data_path,
@@ -28,8 +28,8 @@ from config import (
     chan_types,
 )
 
-report, run_id, results_dir, logger = setup_provenance(script=__file__,
-                                                       results_dir=results_dir)
+# report, run_id, results_dir, logger = setup_provenance(script=__file__,
+#                                                        results_dir=results_dir)
 
 mne.set_log_level('INFO')
 
@@ -56,87 +56,77 @@ for subject in subjects:
         # Get events specific to epoch definition (stim or motor lock)
         events = get_events(epochs.events)
 
-        # name of evoked file
-        ave_fname = op.join(data_path, 'MEG', subject,
-                            '{}-{}-contrasts-ave.fif'.format(ep_name, subject))
-
         # Apply each contrast
-        all_evokeds = list()
         for contrast in contrasts:
-            evokeds = list()
-            # Find trials
-            sel = find_in_df(events, contrast['include'], contrast['exclude'])
-            # Select condition
-            key = contrast['include'].keys()[0]
-            for value in contrast['include'][key]:
-                # Find included trials
-                subsel = [sel[i] for i in np.where(events[key][sel]==value)[0]]
-                # Evoked data
-                # if no trial in conditions, save zeros:
-                if not len(subsel):
-                    warnings.warn('{}: no epochs in {} for {} : {}'.format(
-                                     subject, ep_name, contrast['name'], value))
-                    evoked = epochs[0].average()
-                    evoked.data *= 0.
-                    evoked.nave = 0
-                else:
-                    evoked = epochs[subsel].average()
-                # keep for contrast
-                evoked.comment = contrast['name'] + str(value)
-                evokeds.append(evoked)
-                # keep for saving
-                all_evokeds.append(evoked)
+            # XXX try:
+            delta, evokeds = build_contrast(contrast, epochs, events)
+            # except RuntimeError:
+            #     warnings.warn('{}: no epochs in {} for {}' % (subject, ep_name,
+            #                                                   contrast['name']))
+            #     continue
 
-            # Apply contrast
-            if np.min([e.nave for e in evokeds]) == 0:
-                warnings.warn('{}: no epochs in {} for {}' % (subject, ep_name,
-                                                              contrast['name']))
-                continue
+            # Prepare plot delta (subtraction, or regression)
+            fig1, ax1 = plt.subplots(1, len(chan_types))
+            if type(ax1) is not list:
+                ax1 = [ax1]
+            # Prepare plot all conditions at top level of contrast
+            fig2, ax2 = plt.subplots(len(evokeds), len(chan_types))
+            ax2 = np.reshape(ax2, len(evokeds) * len(chan_types))
 
-            avg = copy.deepcopy(evokeds[0])
-            avg.data *= 0.
-            # if only two condition, only plot the difference between the two
-            if len(evokeds) == 2:
-                avg.data = evokeds[0].data
-                evokeds = [evokeds[1]]
-            else:
-                # else plot all conditions - average across conditions
-                for e in evokeds:
-                    avg.data = avg.data + e.data / len(evokeds)
+            # Loop across channels
+            for ch, chan_type in enumerate(chan_types):
+                # Select specific types of sensor
+                info = delta.info
+                picks = [i for k, p in picks_by_type(info)
+                              for i in p if k in chan_type['name']]
+                # --------------------------------------------------------------
+                # Plot delta (subtraction, or regression)
+                # adjust color scale
+                mM = np.percentile(np.abs(delta.data[picks,:]), 99.)
 
-            # Plot
-            fig, ax = plt.subplots(len(evokeds), len(chan_types))
-            ax = np.reshape(ax, len(evokeds) * len(chan_types))
-            for e, evoked in enumerate(evokeds):
-                for ch, chan_type in enumerate(chan_types):
-                    delta = copy.deepcopy(evoked) - copy.deepcopy(avg)
-                    picks = [i for k, p in picks_by_type(evoked.info) for i in p
-                                                        if k in chan_type['name']]
-                    mM = abs(np.percentile(delta.data[picks,:], 99.))
+                # plot mean sensors x time
+                ax1[ch].imshow(delta.data[picks,:], vmin=-mM, vmax=mM,
+                                  interpolation='none', aspect='auto',
+                                  cmap='RdBu_r', extent=[min(delta.times),
+                                      max(delta.times), 0, len(picks)])
+                # add t0
+                ax1[ch].plot([0, 0], [0, len(picks)], color='black')
+                ax1[ch].set_title(chan_type['name'] + ': ' + delta.comment)
+                ax1[ch].set_xlabel('Time')
+                ax1[ch].set_adjustable('box-forced')
+
+                # --------------------------------------------------------------
+                # Plot all conditions at top level of contrast
+                # XXX only works for +:- data
+                mM = np.mean([np.percentile(abs(e.data[picks,:]), 99.)
+                                                   for e in evokeds['current']])
+
+                for e, evoked in enumerate(evokeds['current']):
                     ax_ind = e * len(chan_types) + ch
-                    ax[ax_ind].imshow(delta.data[picks,:], vmin=-mM, vmax=mM,
+                    ax2[ax_ind].imshow(evoked.data[picks,:], vmin=-mM, vmax=mM,
                                       interpolation='none', aspect='auto',
                                       cmap='RdBu_r', extent=[min(delta.times),
-                                          max(delta.times), 0, len(picks)])
-                    ax[ax_ind].plot([0, 0], [0, len(picks)], color='black')
-                    ax[ax_ind].set_title(chan_type['name'] + ': ' +
-                                         str(contrast['include'][key][e]))
-                    ax[ax_ind].set_xlabel('Time')
-                    ax[ax_ind].set_adjustable('box-forced')
-                    ax[ax_ind].autoscale(False)
+                                          max(evoked.times), 0, len(picks)])
+                    ax2[ax_ind].plot([0, 0], [0, len(picks)], color='black')
+                    ax2[ax_ind].set_title(chan_type['name'] + ': ' +
+                                         evoked.comment)
+                    ax2[ax_ind].set_xlabel('Time')
+                    ax2[ax_ind].set_adjustable('box-forced')
 
-            report.add_figs_to_section(fig, ('%s (%s) %s'
-                % (subject, ep_name, contrast['name'])), contrast['name'])
+            # Save figure
+            # report.add_figs_to_section(fig1, ('%s (%s) %s: DELTA'
+            #     % (subject, ep_name, contrast['name'])), contrast['name'])
+            #
+            # report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS'
+            #     % (subject, ep_name, contrast['name'])), contrast['name'])
 
-            # Topo
-            plot_times = np.linspace(avg.times.min(), avg.times.max(), 10)
-            delta = evokeds[-1] - avg
-            fig = delta.plot_topomap(plot_times, ch_type='mag', sensors=False,
-                                    contours=False)
-            report.add_figs_to_section(fig, ('%s (%s) %s: (topo)'
-                % (subject, ep_name, contrast['name'])), contrast['name'])
 
         # Save all_evokeds
-        mne.write_evokeds(ave_fname, all_evokeds)
+        ave_fname = op.join(data_path, 'MEG', subject,
+                          '{}-{}-contrasts-ave.pickle'.format(ep_name, subject))
+        save_dict = dict()
+        save_dict[contrast['name']] = dict(delta=delta, evokeds=evokeds,
+                                           contrast=contrast, events=events)
+        save_in_dict(ave_fname)
 
-report.save(open_browser=open_browser)
+# report.save(open_browser=open_browser)
