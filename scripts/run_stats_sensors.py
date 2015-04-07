@@ -47,26 +47,27 @@ chan_type = chan_types[0]
 # for ep in epochs_contrasts:
 #     for contrast in contrasts:
 #         print(ep['name'] + ':' + contrast)
-#         for chan_type in chan_types:
+
 
 # Contrasts
-evokeds = ([], []) # XXX JRK: only valid for binary contrasts
+evokeds = list()
 # Gather data across all subjects
 for s, subject in enumerate(subjects):
     ave_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-contrasts-ave.fif'.format(ep['name'],
-                                                         subject))
-    key = contrast['include'].keys()[0]
-    for v, value in enumerate(contrast['include'][key]):
-        evoked = mne.read_evokeds(ave_fname, contrast['name'] +
-                                             str(value))
-        if evoked.nave == 0:
-            print('No epochs for {} {}!'.format(subject,
-                                                contrast['name']))
-        picks = [evoked.ch_names[ii] for ii in
-                 mne.pick_types(evoked.info, meg=chan_type['name'])]
-        evoked.pick_channels(picks)
-        evokeds[v].append(evoked)
+                        '{}-{}-contrasts-ave.pickle'.format(ep['name'],subject))
+    delta, evoked = load_from_dict(ave_fname, contrast['name'], out_type=='list')[0]
+    evokeds.append(evoked['current'])
+    # XXX warning if subjects has missing condition
+
+
+# select only evokeds that corresponds to the highest level of contrast
+# XXX
+#         for chan_type in chan_types:
+
+# take first evoked to retrieve all necessary information
+evoked = evokeds[0][0]
+picks = [evoked.ch_names[ii] for ii in mne.pick_types(evoked.info, meg=chan_type['name'])]
+evoked.pick_channels(picks)
 
 # Stats
 cluster = cluster_stat(evokeds, n_permutations=2 ** 11,
@@ -110,7 +111,9 @@ pkl_fname = op.join(data_path, 'MEG/fsaverage', '%s-cluster_sensors.pickle' % (e
 
 # If file exist, load already save data and append new cluster
 save_var = dict()
-save_var[contrast['name']]=dict(evokeds=evokeds, cluster=cluster, contrast=contrast, chan_type=chan_type, ep=ep, subjects=subjects)
+save_var[contrast['name']]=dict(evokeds=evokeds, cluster=cluster,
+                                contrast=contrast, chan_type=chan_type, ep=ep,
+                                subjects=subjects)
 save_to_dict(pkl_fname, save_var, overwrite=True)
 load_from_dict(pkl_fname, save_var, overwrite=True)
 

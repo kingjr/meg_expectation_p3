@@ -59,7 +59,7 @@ for subject in subjects:
         # Apply each contrast
         for contrast in contrasts:
             # XXX try:
-            delta, evokeds = build_contrast(contrast, epochs, events)
+            delta, evokeds = build_contrast(contrast['conditions'], epochs, events)
             # except RuntimeError:
             #     warnings.warn('{}: no epochs in {} for {}' % (subject, ep_name,
             #                                                   contrast['name']))
@@ -67,7 +67,7 @@ for subject in subjects:
 
             # Prepare plot delta (subtraction, or regression)
             fig1, ax1 = plt.subplots(1, len(chan_types))
-            if type(ax1) is not list:
+            if type(ax1) not in [list, np.ndarray]:
                 ax1 = [ax1]
             # Prepare plot all conditions at top level of contrast
             fig2, ax2 = plt.subplots(len(evokeds), len(chan_types))
@@ -127,6 +127,6 @@ for subject in subjects:
         save_dict = dict()
         save_dict[contrast['name']] = dict(delta=delta, evokeds=evokeds,
                                            contrast=contrast, events=events)
-        save_in_dict(ave_fname)
+        save_to_dict(ave_fname, save_dict)
 
 # report.save(open_browser=open_browser)
