@@ -1,5 +1,71 @@
+import pickle
+import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
+
+def save_to_dict(fname, data, overwrite=False):
+    """Add pickle object to file without replacing its content using a
+    dictionary format which keys' correspond to the names of the variables.
+
+    Parameters
+    ----------
+    fname : str
+        file name
+    data : dict
+    overwrite : bool
+        Default: False
+    """
+    # Identify whether the file exists
+    if op.isfile(fname) and not overwrite:
+        data_dict = load_from_dict(fname)
+    else:
+        data_dict = dict()
+
+    for key in data.keys():
+        data_dict[key] = data[key]
+
+    # Save
+    with open(fname, 'w') as f:
+        pickle.dump(data_dict, f)
+
+def load_from_dict(fname, varnames=None):
+    """Load pickle object from file using a dictionary format which keys'
+     correspond to the names of the variables.
+
+    Parameters
+    ----------
+    fname : str
+        file name
+    varnames : None | str | list (optional)
+        Variables to load. By default, load all of them.
+
+    Returns
+    -------
+    vars : dict
+        dictionary of loaded variables which keys corresponds to varnames
+    """
+
+    # Identify whether the file exists
+    if not op.isfile(fname):
+        raise RuntimeError('%s not found' % fname)
+
+    # Load original data
+    with open(fname) as f:
+        data_dict = pickle.load(f)
+
+    # Specify variables to load
+    if not varnames:
+        varnames = data_dict.keys()
+    elif varnames is str:
+        varnames = [varnames]
+
+    # Append result in a list
+    out = dict()
+    for key in varnames:
+        out[key] = data_dict[key]
+
+    return out
+
 
 def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
             err_args=dict()):
