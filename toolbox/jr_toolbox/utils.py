@@ -17,30 +17,38 @@ def build_contrast(evoked_list, epochs, events, weight='identical'):
     evokeds : list
         list of average evoked conditions
 
-    e.g.
+    e.g. XXX Make example
 
 
     """
-    evokeds = list()
+    evokeds = dict()
+    evokeds['sub'] = list()  # list of all evoked from lower level
+    evokeds['current'] = list() # evoked of contrast
+
     for evoked in evoked_list:
-        if evoked is dict:
+        if type(evoked) is dict:
+            # Handle unspecified exclude condition
+            if 'exclude' not in evoked.keys():
+                evoked['exclude'] = dict()
+
             sel = find_in_df(events, evoked['include'], evoked['exclude'])
             # if no trial in conditions, save zeros:
             if not len(sel):
                 raise RuntimeError('no epoch in '.format(evoked['name'], value))
             # Average
-            evoked = epochs[sel].average()
+            avg = epochs[sel].average()
             # Keep info
-            evoked.comment = evoked['name']
+            avg.comment = evoked['name']
             # Change weight for subsequent contrast
             if weight == 'identical':
-                evoked.nave = 1
-            evokeds.append(evoked)
+                avg.nave = 1
+            evokeds['current'].append(avg)
         else:
-            evoked, evokeds_ = operator(evoked, epochs, events)
-            evokeds.append(evokeds_)
+            evoked, evokeds_ = build_contrast(evoked, epochs, events)
+            evokeds['sub'].append(evokeds_)
+            evokeds['current'].append(evoked)
     else:
-        delta = evoked[0] - evoked[1]
+        delta = evokeds['current'][0] - evokeds['current'][1]
 
     return delta, evokeds
 
