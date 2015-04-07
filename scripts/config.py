@@ -36,7 +36,7 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
             's11_ts100368', 's14_ac130389', 's17_ft120490', 's20_ad120286',
             's23_pf120155', 's26_sb130354', 's6_sb120316', 's9_df130078',
             's12_aa100234', 's15_nv110179', 's18_rg110386', 's21_jl130434',
-            's24_cl120289', 's4_sa130042', ' s7_jm100109']
+            's24_cl120289', 's4_sa130042', 's7_jm100109']
 # not included: s15_nv110179 (MaxFilter), s19_cd110147 (MaxFilter)
 # s14_ac130389, s17_ft120490 have two sss for certain blocks
 # XXX JRK: This should be solvable!
