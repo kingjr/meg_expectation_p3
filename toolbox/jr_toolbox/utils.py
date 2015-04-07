@@ -4,6 +4,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
+def build_contrast(evoked_list, epochs, events, weight='identical'):
+    """Builds a n-deep contrast where n represents different levels of contrasts
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    delta : evoked
+        contrast
+    evokeds : list
+        list of average evoked conditions
+
+    e.g.
+
+
+    """
+    evokeds = list()
+    for evoked in evoked_list:
+        if evoked is dict:
+            sel = find_in_df(events, evoked['include'], evoked['exclude'])
+            # if no trial in conditions, save zeros:
+            if not len(sel):
+                raise RuntimeError('no epoch in '.format(evoked['name'], value))
+            # Average
+            evoked = epochs[sel].average()
+            # Keep info
+            evoked.comment = evoked['name']
+            # Change weight for subsequent contrast
+            if weight == 'identical':
+                evoked.nave = 1
+            evokeds.append(evoked)
+        else:
+            evoked, evokeds_ = operator(evoked, epochs, events)
+            evokeds.append(evokeds_)
+    else:
+        delta = evoked[0] - evoked[1]
+
+    return delta, evokeds
+
 
 def save_to_dict(fname, data, overwrite=False):
     """Add pickle object to file without replacing its content using a
