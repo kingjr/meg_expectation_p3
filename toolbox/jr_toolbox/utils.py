@@ -2,6 +2,8 @@ import pickle
 import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
+
 
 def save_to_dict(fname, data, overwrite=False):
     """Add pickle object to file without replacing its content using a
@@ -28,7 +30,8 @@ def save_to_dict(fname, data, overwrite=False):
     with open(fname, 'w') as f:
         pickle.dump(data_dict, f)
 
-def load_from_dict(fname, varnames=None):
+
+def load_from_dict(fname, varnames=None, out_type='dict'):
     """Load pickle object from file using a dictionary format which keys'
      correspond to the names of the variables.
 
@@ -38,6 +41,8 @@ def load_from_dict(fname, varnames=None):
         file name
     varnames : None | str | list (optional)
         Variables to load. By default, load all of them.
+    out_type : str
+        'list', 'dict': default: dict
 
     Returns
     -------
@@ -60,9 +65,15 @@ def load_from_dict(fname, varnames=None):
         varnames = [varnames]
 
     # Append result in a list
-    out = dict()
-    for key in varnames:
-        out[key] = data_dict[key]
+    if out_type == 'dict':
+        out = dict()
+        for key in varnames:
+            out[key] = data_dict[key]
+    elif out_type == 'list':
+        out = list()
+        for key in varnames:
+            out.append(data_dict[key])
+
 
     return out
 
