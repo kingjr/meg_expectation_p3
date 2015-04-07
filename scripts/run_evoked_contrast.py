@@ -64,7 +64,6 @@ for subject in subjects:
         all_evokeds = list()
         for contrast in contrasts:
             evokeds = list()
-
             # Find trials
             sel = find_in_df(events, contrast['include'], contrast['exclude'])
             # Select condition
@@ -73,9 +72,17 @@ for subject in subjects:
                 # Find included trials
                 subsel = [sel[i] for i in np.where(events[key][sel]==value)[0]]
                 # Evoked data
-                evoked = epochs[subsel].average()
-                evoked.comment = contrast['name']+str(value)
+                # if no trial in conditions, save zeros:
+                if not len(subsel):
+                    warnings.warn('%s: no epochs in %s for %s : %s'.format(
+                                     subject, ep_name, contrast['name'], value))
+                    evoked = epochs[0].average()
+                    evoked.data *= 0.
+                    evoked.nave = 0
+                else:
+                    evoked = epochs[subsel].average()
                 # keep for contrast
+                evoked.comment = contrast['name'] + str(value)
                 evokeds.append(evoked)
                 # keep for saving
                 all_evokeds.append(evoked)
