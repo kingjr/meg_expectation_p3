@@ -6,7 +6,7 @@ base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
 #data_path = '/Volumes/INSERM/data'
-data_path = '/media/jrking/INSERM/data' # XXX to be changed
+data_path = '/media/INSERM/data' # XXX to be changed
 
 pass_errors = False
 
@@ -74,8 +74,8 @@ if not op.exists(results_dir):
 # SELECTION ####################################################################
 from mne.channels import read_ch_connectivity
 meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
-chan_types = (dict(name='meg', connectivity=meg_connectivity),
-            dict(name='eeg', connectivity=None))
+chan_types = [dict(name='meg', connectivity=meg_connectivity),
+              dict(name='eeg', connectivity=None)]
 
 # ICA ##########################################################################
 use_ica = True

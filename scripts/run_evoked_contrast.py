@@ -74,7 +74,7 @@ for subject in subjects:
                 # Evoked data
                 # if no trial in conditions, save zeros:
                 if not len(subsel):
-                    warnings.warn('%s: no epochs in %s for %s : %s'.format(
+                    warnings.warn('{}: no epochs in {} for {} : {}'.format(
                                      subject, ep_name, contrast['name'], value))
                     evoked = epochs[0].average()
                     evoked.data *= 0.
@@ -89,7 +89,7 @@ for subject in subjects:
 
             # Apply contrast
             if np.min([e.nave for e in evokeds]) == 0:
-                warnings.warn('%s: no epochs in %s for %s' % (subject, ep_name,
+                warnings.warn('{}: no epochs in {} for {}' % (subject, ep_name,
                                                               contrast['name']))
                 continue
 
