@@ -57,7 +57,9 @@ def get_events(events):
         trigger_stim = trigger % 64
         trigger_motor2 = trigger % 1024 - trigger_stim
         trigger_motor1 = trigger - trigger_stim - trigger_motor2
-
+        event['trigger_stim'] = trigger_stim
+        event['trigger_motor1'] = trigger_motor1
+        event['trigger_motor2'] = trigger_motor2
 
         # Stimulus category (absent/letter/digit)
 
@@ -67,6 +69,19 @@ def get_events(events):
             event['present'] = False
             event['target'] = None
             event['soa'] = None
+            if trigger_stim in range(1, 5):
+                event['soa_ttl'] = 17
+            elif trigger_stim in range(13, 17):
+                event['soa_ttl'] = 33
+            elif trigger_stim in range(25, 29):
+                event['soa_ttl'] = 50
+            elif trigger_stim in range(37, 41):
+                event['soa_ttl'] = 67
+            elif trigger_stim in range(49, 53):
+                event['soa_ttl'] = 83
+            else:
+                raise RuntimeError('did not find adequate ttl')
+                event['soa_ttl'] = None
         else:
             event['present'] = True
 
@@ -78,6 +93,7 @@ def get_events(events):
                 # 9 11 21-24 33-36 45-48 58 60
                 event['target'] = 'number'
             else:
+                raise RuntimeError('did not find adequate ttl')
                 event['target'] = None
 
             # SOA for target-present trials
@@ -97,7 +113,10 @@ def get_events(events):
                 # 54,56,58,60 (can be 53-60)
                 event['soa'] = 83
             else:
+                raise RuntimeError('did not find adequate ttl')
                 event['soa'] = None
+
+            event['soa_ttl'] = event['soa']
 
         # Forced_choice response (which right hand finger corresponds to letter
         # response)
@@ -145,21 +164,31 @@ def get_events(events):
             event['missed_m2'] = True
             event['pas'] = None
 
-        # Seen/Unseen (0,1 vs. 2,3)
-        if event['pas'] < 2:
-            event['seen'] = True
-        elif event['pas'] > 1:
-            event['seen'] = False
-        else:
-            event['seen'] = None
+        # XXX Define this only when you'll analyze it
+        # # Seen/Unseen (0,1 vs. 2,3)
+        # if event['pas'] < 2:
+        #     event['seen'] = 0
+        # elif event['pas'] > 1:
+        #     event['seen'] = 1
+        # else:
+        #     event['seen'] = None
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
-            event['seen_2'] = True
+            event['seen'] = False
         elif event['pas'] > 0:
-            event['seen_2'] = False
+            event['seen'] = True
         else:
-            event['seen_2'] = None
+            event['seen'] = None
+
+        # Interaction seen SOA
+        # XXX Should find to way to make interactions automatically
+        if event['seen'] == True:
+            event['seen_X_soa'] = 'seen_' + str(event['soa'])
+        elif event['seen'] == False:
+            event['seen_X_soa'] = 'unseen_' + str(event['soa'])
+        else:
+            event['seen_X_soa'] = None
 
         # Block
         if ((trigger_stim % 2) == 1):
@@ -169,30 +198,35 @@ def get_events(events):
             #even numbers
             event['block'] = 'visible'
         else:
+            raise RuntimeError('did not find adequate ttl')
             event['block'] = None
 
-
         # Local context
-        N1_trigger = events[ii-1, 2] % (2 ** 15)
-        N1_trigger_stim = N1_trigger % 64
-        N1_trigger_motor2 = N1_trigger % 1024 - trigger_stim # PAS response for N-1
-
-        N2_trigger = events[ii-2, 2] % (2 ** 15)
-        N2_trigger_stim = N2_trigger % 64
-        N2_trigger_motor2 = N2_trigger % 1024 - trigger_stim # PAS response for N-2
-
-        if (N1_trigger_motor2 <= (2 ** 7)):
-            if (N2_trigger_motor2 <= (2 ** 7)):
-                event['local_context'] = 'UU'
-            elif (N2_trigger_motor2 > (2 ** 7)):
-                event['local_context'] = 'US'
-        elif (N1_trigger_motor2 > (2 ** 7)):
-            if (N2_trigger_motor2 <= (2 ** 7)):
-                event['local_context'] = 'SU'
-            elif (N2_trigger_motor2 > (2 ** 7)):
-                event['local_context'] = 'SS'
+        if ii > 1:
+            seen1 = events_data_frame[-1]['seen']
+            if seen1==True:
+                event['local_context'] = 'S'
+            elif seen1==False:
+                event['local_context'] = 'U'
+            else:
+                event['local_context'] = None
         else:
             event['local_context'] = None
+
+        if ii > 2:
+            seen2 = events_data_frame[-2]['seen']
+            if seen1==True and seen2==True:
+                event['local_context2'] = 'SS'
+            elif seen1==True and seen2==False:
+                event['local_context2'] = 'SU'
+            elif seen1==False and seen2==True:
+                event['local_context2'] = 'US'
+            elif seen1==False and seen2==False:
+                event['local_context2'] = 'UU'
+            else:
+                event['local_context2'] = None
+        else:
+            event['local_context2'] = None
 
 
         events_data_frame.append(event)
@@ -203,8 +237,10 @@ def extract_events(raw):
     triggers, find the two following motor responses, and combined their trigger
     values to know that they go in triplets."""
 
-    events = mne.find_events(raw, stim_channel = 'STI101', verbose = False,
-                                consecutive ='increasing',min_duration=0.001)
+    events = mne.find_events(raw, stim_channel='STI101', verbose=True,
+                             consecutive='increasing', min_duration=0.000,
+                             shortest_event=1) # XXX ISSUE WITH MISSING TRIGGER
+                                               # IN ABSENT TRIAL
 
     # Define stim and motor triggers
     stim  = range(1, 64)

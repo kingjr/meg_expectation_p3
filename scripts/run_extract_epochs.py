@@ -24,7 +24,7 @@ from scripts.config import (
     eog_ch,
     ecg_ch,
     events_fname_filt_tmp,
-    ch_types_used,
+    chan_types,
     epochs_params,
     use_ica,
     open_browser
@@ -47,9 +47,9 @@ for subject in subjects:
 
     icas = list()
     if use_ica is True:
-        for ch_type in ch_types_used:
+        for chan_type in chan_types:
             icas.append(read_ica(
-                op.join(this_path, '{}-ica.fif'.format(ch_type))))
+                op.join(this_path, '{}-ica.fif'.format(chan_type['name']))))
     for r in runs:
         fname = op.join(this_path, raw_fname_filt_tmp.format(r))
         if not op.isfile(fname):
@@ -62,13 +62,13 @@ for subject in subjects:
         set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
 
         # Interpolate bad channels
-        if 'eeg' in ch_types_used and len(raw.info['bads']) > 0:
+        if 'eeg' in [i['name'] for i in chan_types] and len(raw.info['bads']) > 0:
             raw.interpolate_bad_channels()
 
         # Select MEG channels
         picks = np.concatenate(
             [p for k, p in picks_by_type(raw.info, meg_combined=True)
-             if k in ch_types_used])
+             if k in [i['name'] for i in chan_types]])
         picks = np.concatenate([picks, mne.pick_types(raw.info, meg=False,
                                                       eeg=False, eog=True,
                                                       stim=True)])

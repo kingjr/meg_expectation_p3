@@ -7,6 +7,7 @@ base_path = op.dirname(op.dirname(__file__))
 data_path = op.join(base_path, 'data')
 #data_path = '/Volumes/INSERM/data'
 
+
 pass_errors = False
 
 """ Data paths:
@@ -35,18 +36,16 @@ subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
             's11_ts100368', 's14_ac130389', 's17_ft120490', 's20_ad120286',
             's23_pf120155', 's26_sb130354', 's6_sb120316', 's9_df130078',
             's12_aa100234', 's15_nv110179', 's18_rg110386', 's21_jl130434',
-            's24_cl120289', 's4_sa130042', ' s7_jm100109']
+            's24_cl120289', 's4_sa130042', 's7_jm100109']
 # not included: s15_nv110179 (MaxFilter), s19_cd110147 (MaxFilter)
 # s14_ac130389, s17_ft120490 have two sss for certain blocks
 # XXX JRK: This should be solvable!
 
-subjects = ['s23_pf120155'] # For now, only run on on subject
-
-exclude_subjects = []
+exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
-runs = list(range(1, 2))  # number of runs per subject
+runs = list(range(1, 5))  # number of runs per subject
 
 # FILRERING ####################################################################
 lowpass = 35
@@ -73,7 +72,10 @@ if not op.exists(results_dir):
     os.mkdir(results_dir)
 
 # SELECTION ####################################################################
-ch_types_used = ['meg', 'eeg']
+from mne.channels import read_ch_connectivity
+meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
+chan_types = [dict(name='meg', connectivity=meg_connectivity),
+              dict(name='eeg', connectivity=None)]
 
 # ICA ##########################################################################
 use_ica = False
@@ -109,14 +111,31 @@ epochs_params = [epochs_stim, epochs_motor1]
 # Here define your contrast of interest
 contrasts = (
             dict(name='present_absent',
-                 include=dict(cond='present', values=[True, False]),
-                 exclude=[dict(cond='soa', values=[17, 33, 50, 83])]),
-            dict(name='motor1_finger',
-                 include=dict(cond='motor1', values=['left', 'right']),
-                 exclude=[dict(cond='missed_m1', values=[True])]),
+                 include=dict(present=[True, False]),
+                 exclude=dict()),
+            dict(name='seen_unseen',
+                 include=dict(seen=[True, False]),
+                 exclude=dict()),
+            dict(name='pas',
+                 include=dict(pas=[0, 1, 2, 3]),
+                 exclude=dict()),
+            dict(name='global',
+                 include=dict(block=['visible', 'invisible']),
+                 exclude=dict(soa=[17, 83])),
+            dict(name='local',
+                 include=dict(local_context=['S', 'U']),
+                 exclude=dict()),
+            dict(name='soa',
+                 include=dict(soa=[17, 33, 50, 67, 83]),
+                 exclude=dict()),
+            dict(name='seen_X_soa',
+                 include=dict(seen_X_soa=[seen + str(soa)
+                                for seen in ['seen_', 'unseen_']
+                                    for soa in [17, 33, 50, 67, 83]]),
+                exclude=dict())
             )
 
-
+epochs_contrasts = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
 # DECODING #####################################################################
 # preprocessing for memory
 decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
@@ -139,3 +158,23 @@ decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
 clu_sigma = 1e3
 clu_n_permutations = 1024
 clu_threshold = 0.05
+
+
+# TO RUN TESTS #################################################################
+use_ica = False # XXX deal with bad chan first
+# exclude_subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
+#                     's15_nv110179'] # maxfilter error + already done subjects
+# exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error + already done subjects
+subjects = ['s4_sa130042']
+data_path = '/media/jrking/INSERM/data'
+# XXX REDO ALL CONTRAST WITH THE FOLLOWING FORMAT
+contrast_pst = dict(name='presence', conditions=[dict(name='present', include=dict(present=True)),
+                                                dict(name='absent', include=dict(present=False))])
+contrast_seenXlocal = dict(name='seen_X_local', conditions=[
+                       [dict(name='seen_S', include=dict(seen=True, local_context='S')),
+                        dict(name='unseen_S', include=dict(seen=False, local_context='S'))],
+                       [dict(name='seen_U', include=dict(seen=True, local_context='U')),
+                        dict(name='unseen_U', include=dict(seen=False, local_context='U'))]])
+contrasts = [contrast_seenXlocal]
+epochs_params = [epochs_params[0]]
+epochs_contrasts = [epochs_contrasts[0]]

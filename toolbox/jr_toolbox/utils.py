@@ -1,4 +1,130 @@
+import pickle
+import os.path as op
 import numpy as np
+import matplotlib.pyplot as plt
+import warnings
+
+def build_contrast(evoked_list, epochs, events, weight='identical'):
+    """Builds a n-deep contrast where n represents different levels of contrasts
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    delta : evoked
+        contrast
+    evokeds : list
+        list of average evoked conditions
+
+    e.g. XXX Make example
+
+
+    """
+    evokeds = dict()
+    evokeds['sub'] = list()  # list of all evoked from lower level
+    evokeds['current'] = list() # evoked of contrast
+
+    for evoked in evoked_list:
+        if type(evoked) is dict:
+            # Handle unspecified exclude condition
+            if 'exclude' not in evoked.keys():
+                evoked['exclude'] = dict()
+
+            sel = find_in_df(events, evoked['include'], evoked['exclude'])
+            # if no trial in conditions, save zeros:
+            if not len(sel):
+                raise RuntimeError('no epoch in '.format(evoked['name'], value))
+            # Average
+            avg = epochs[sel].average()
+            # Keep info
+            avg.comment = evoked['name']
+            # Change weight for subsequent contrast
+            if weight == 'identical':
+                avg.nave = 1
+            evokeds['current'].append(avg)
+        else:
+            evoked, evokeds_ = build_contrast(evoked, epochs, events)
+            evokeds['sub'].append(evokeds_)
+            evokeds['current'].append(evoked)
+    else:
+        delta = evokeds['current'][0] - evokeds['current'][1]
+
+    return delta, evokeds
+
+
+def save_to_dict(fname, data, overwrite=False):
+    """Add pickle object to file without replacing its content using a
+    dictionary format which keys' correspond to the names of the variables.
+
+    Parameters
+    ----------
+    fname : str
+        file name
+    data : dict
+    overwrite : bool
+        Default: False
+    """
+    # Identify whether the file exists
+    if op.isfile(fname) and not overwrite:
+        data_dict = load_from_dict(fname)
+    else:
+        data_dict = dict()
+
+    for key in data.keys():
+        data_dict[key] = data[key]
+
+    # Save
+    with open(fname, 'w') as f:
+        pickle.dump(data_dict, f)
+
+
+def load_from_dict(fname, varnames=None, out_type='dict'):
+    """Load pickle object from file using a dictionary format which keys'
+     correspond to the names of the variables.
+
+    Parameters
+    ----------
+    fname : str
+        file name
+    varnames : None | str | list (optional)
+        Variables to load. By default, load all of them.
+    out_type : str
+        'list', 'dict': default: dict
+
+    Returns
+    -------
+    vars : dict
+        dictionary of loaded variables which keys corresponds to varnames
+    """
+
+    # Identify whether the file exists
+    if not op.isfile(fname):
+        raise RuntimeError('%s not found' % fname)
+
+    # Load original data
+    with open(fname) as f:
+        data_dict = pickle.load(f)
+
+    # Specify variables to load
+    if not varnames:
+        varnames = data_dict.keys()
+    elif varnames is str:
+        varnames = [varnames]
+
+    # Append result in a list
+    if out_type == 'dict':
+        out = dict()
+        for key in varnames:
+            out[key] = data_dict[key]
+    elif out_type == 'list':
+        out = list()
+        for key in varnames:
+            out.append(data_dict[key])
+
+
+    return out
+
 
 def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
             err_args=dict()):
@@ -345,3 +471,47 @@ class cluster_stat(dict):
             plt.show()
 
         return fig
+
+
+def find_in_df(df, include, exclude=dict(), max_n=np.inf):
+    """Find instance in pd.dataFrame that correspond to include and exlcuding
+    criteria.
+
+    Parameters
+    ----------
+    df : pd.dataFrame
+    includes : list | dict()
+    excludes : list | dict()
+    Returns
+    -------
+    inds : np.array"""
+    import random
+
+    # Find included trials
+    include_inds = _find_in_df(df, include)
+    # Find excluded trials
+    exclude_inds = _find_in_df(df, exclude)
+
+    # Select condition
+    inds = [i for i in include_inds if i not in exclude_inds]
+
+    # reduce number or trials if too many
+    if len(inds) > max_n:
+        random.shuffle(inds)
+        inds = inds[:max_n]
+
+    return inds
+
+
+def _find_in_df(df, le_dict):
+    """Find all instances in pd dataframe that match one of the specified
+    conditions"""
+    inds = []
+    for key in le_dict.keys():
+        if type(le_dict[key]) not in (list, np.ndarray):
+            le_dict[key] = [le_dict[key]]
+        for value in le_dict[key]:
+            for i in np.where(df[key] == value)[0]:
+                inds.append(i)
+    inds = np.unique(inds)
+    return inds
