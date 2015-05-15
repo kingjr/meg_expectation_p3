@@ -166,15 +166,44 @@ use_ica = False # XXX deal with bad chan first
 #                     's15_nv110179'] # maxfilter error + already done subjects
 # exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error + already done subjects
 subjects = ['s4_sa130042']
-data_path = '/media/jrking/INSERM/data'
+# data_path = '/media/jrking/INSERM/data'
 # XXX REDO ALL CONTRAST WITH THE FOLLOWING FORMAT
-contrast_pst = dict(name='presence', conditions=[dict(name='present', include=dict(present=True)),
-                                                dict(name='absent', include=dict(present=False))])
-contrast_seenXlocal = dict(name='seen_X_local', conditions=[
-                       [dict(name='seen_S', include=dict(seen=True, local_context='S')),
-                        dict(name='unseen_S', include=dict(seen=False, local_context='S'))],
-                       [dict(name='seen_U', include=dict(seen=True, local_context='U')),
-                        dict(name='unseen_U', include=dict(seen=False, local_context='U'))]])
-contrasts = [contrast_seenXlocal]
+
+from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
+# example of simple contrast
+contrast_pst = dict(
+    name='presence', operator=evoked_subtract, conditions=[
+        dict(name='present', include=dict(present=True)),
+        dict(name='absent', include=dict(present=False))])
+
+# example of interaction contrast
+contrast_seenLocalS = dict(
+    name='seenS-unseenS', operator=evoked_subtract, conditions=[
+        dict(name='seen_S', include=dict(seen=True, local_context='S')),
+        dict(name='unseen_S', include=dict(seen=False, local_context='S'))])
+contrast_seenLocalU = dict(
+    name='seenU-unseenU', operator=evoked_subtract, conditions=[
+        dict(name='seen_U', include=dict(seen=True, local_context='U')),
+        dict(name='unseen_U', include=dict(seen=False, local_context='U'))])
+contrast_seenXlocal = dict(
+    name='seen_X_local', operator=evoked_subtract, conditions=[
+        contrast_seenLocalS, contrast_seenLocalU])
+
+# example of simple regressor
+regress_visibility = dict(
+    name='pas', operator=evoked_spearman, conditions=[
+        dict(name='0', include=dict(pas=0)),
+        dict(name='1', include=dict(pas=1)),
+        dict(name='2', include=dict(pas=2)),
+        dict(name='3', include=dict(pas=3))])
+
+# the same only for present trials
+regress_visibility = dict(
+    name='pas', operator=evoked_spearman, conditions=[
+        dict(name=str(idx), include=dict(pas=idx), exclude=dict(present=False))
+        for idx in range(4)])
+
+
+contrasts = [contrast_pst, contrast_seenXlocal, regress_visibility]
 epochs_params = [epochs_params[0]]
 epochs_contrasts = [epochs_contrasts[0]]

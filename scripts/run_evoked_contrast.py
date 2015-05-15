@@ -59,11 +59,8 @@ for subject in subjects:
         # Apply each contrast
         for contrast in contrasts:
             # XXX try:
-            delta, evokeds = build_contrast(contrast['conditions'], epochs, events)
-            # except RuntimeError:
-            #     warnings.warn('{}: no epochs in {} for {}' % (subject, ep_name,
-            #                                                   contrast['name']))
-            #     continue
+            delta, evokeds = build_contrast(contrast['conditions'], epochs,
+                                            events, contrast['operator'])
 
             # Prepare plot delta (subtraction, or regression)
             fig1, ax1 = plt.subplots(1, len(chan_types))
