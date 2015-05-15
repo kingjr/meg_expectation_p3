@@ -82,7 +82,7 @@ for subject in subjects:
             # Select events
             # sel = events_select_condition(events[:,2], ep['events'])
 
-            sel = events_select_condition(events[:,2], 'letter') ## needs to be stim, stim_motor, etc.
+            sel = events_select_condition(events[:,2], 'stim')  # TODO var for motor lock
             events_sel = events[sel,:]
 
             # Only keep parameters applicable to mne.Epochs()
