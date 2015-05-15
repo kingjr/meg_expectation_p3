@@ -51,10 +51,10 @@ def build_contrast(evoked_list, epochs, events, operator=None):
         else:
             if 'operator' not in evoked_list.keys():
                 evoked_list['operator'] = None
-            evoked, evokeds_ = build_contrast(evoked, epochs, events,
-                                              evoked_list['operator'])
+            coef_, evokeds_ = build_contrast(evoked, epochs, events,
+                                             evoked_list['operator'])
             evokeds['evokeds'].append(evokeds_)
-            evokeds['coef'].append(evoked)
+            evokeds['coef'].append(coef_)
     else:
         # Set default operation
         if operator is None:

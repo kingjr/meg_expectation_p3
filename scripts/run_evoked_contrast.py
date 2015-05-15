@@ -59,7 +59,7 @@ for subject in subjects:
         # Apply each contrast
         for contrast in contrasts:
             # XXX try:
-            delta, evokeds = build_contrast(contrast['conditions'], epochs,
+            coef, evokeds = build_contrast(contrast['conditions'], epochs,
                                             events, contrast['operator'])
 
             # Prepare plot delta (subtraction, or regression)
@@ -73,36 +73,36 @@ for subject in subjects:
             # Loop across channels
             for ch, chan_type in enumerate(chan_types):
                 # Select specific types of sensor
-                info = delta.info
+                info = coef.info
                 picks = [i for k, p in picks_by_type(info)
                               for i in p if k in chan_type['name']]
                 # --------------------------------------------------------------
-                # Plot delta (subtraction, or regression)
+                # Plot coef (subtraction, or regression)
                 # adjust color scale
-                mM = np.percentile(np.abs(delta.data[picks,:]), 99.)
+                mM = np.percentile(np.abs(coef.data[picks,:]), 99.)
 
                 # plot mean sensors x time
-                ax1[ch].imshow(delta.data[picks,:], vmin=-mM, vmax=mM,
+                ax1[ch].imshow(coef.data[picks,:], vmin=-mM, vmax=mM,
                                   interpolation='none', aspect='auto',
-                                  cmap='RdBu_r', extent=[min(delta.times),
-                                      max(delta.times), 0, len(picks)])
+                                  cmap='RdBu_r', extent=[min(coef.times),
+                                      max(coef.times), 0, len(picks)])
                 # add t0
                 ax1[ch].plot([0, 0], [0, len(picks)], color='black')
-                ax1[ch].set_title(chan_type['name'] + ': ' + delta.comment)
+                ax1[ch].set_title(chan_type['name'] + ': ' + coef.comment)
                 ax1[ch].set_xlabel('Time')
                 ax1[ch].set_adjustable('box-forced')
 
                 # --------------------------------------------------------------
                 # Plot all conditions at top level of contrast
                 # XXX only works for +:- data
-                mM = np.mean([np.percentile(abs(e.data[picks,:]), 99.)
-                                                   for e in evokeds['current']])
+                mM = np.mean([np.percentile(abs(e.data[picks, :]), 99.)
+                              for e in evokeds['coef']])
 
-                for e, evoked in enumerate(evokeds['current']):
+                for e, evoked in enumerate(evokeds['coef']):
                     ax_ind = e * len(chan_types) + ch
                     ax2[ax_ind].imshow(evoked.data[picks,:], vmin=-mM, vmax=mM,
                                       interpolation='none', aspect='auto',
-                                      cmap='RdBu_r', extent=[min(delta.times),
+                                      cmap='RdBu_r', extent=[min(coef.times),
                                           max(evoked.times), 0, len(picks)])
                     ax2[ax_ind].plot([0, 0], [0, len(picks)], color='black')
                     ax2[ax_ind].set_title(chan_type['name'] + ': ' +
@@ -122,7 +122,7 @@ for subject in subjects:
         ave_fname = op.join(data_path, 'MEG', subject,
                           '{}-{}-contrasts-ave.pickle'.format(ep_name, subject))
         save_dict = dict()
-        save_dict[contrast['name']] = dict(delta=delta, evokeds=evokeds,
+        save_dict[contrast['name']] = dict(coef=coef, evokeds=evokeds,
                                            contrast=contrast, events=events)
         save_to_dict(ave_fname, save_dict)
 
