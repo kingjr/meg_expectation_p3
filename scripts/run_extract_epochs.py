@@ -80,9 +80,7 @@ for subject in subjects:
         # Epoch data for each epoch type
         for ep, epochs_list in zip(epochs_params, all_epochs):
             # Select events
-            # sel = events_select_condition(events[:,2], ep['events'])
-
-            sel = events_select_condition(events[:,2], 'stim')  # TODO var for motor lock
+            sel = events_select_condition(events[:,2], ep['events'])
             events_sel = events[sel,:]
 
             # Only keep parameters applicable to mne.Epochs()
