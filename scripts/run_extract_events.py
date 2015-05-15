@@ -49,7 +49,7 @@ for subject in subjects:
             events_param = dict()
 
         events = extract_events(raw)
-        #print(len(events))
+        print(len(events))
 
         # Save
         mne.write_events(

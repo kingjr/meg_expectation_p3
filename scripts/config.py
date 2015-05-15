@@ -166,7 +166,7 @@ use_ica = False # XXX deal with bad chan first
 #                     's15_nv110179'] # maxfilter error + already done subjects
 # exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error + already done subjects
 subjects = ['s4_sa130042']
-data_path = '/media/jrking/INSERM/data'
+data_path = '/Volumes/INSERM/data'
 # XXX REDO ALL CONTRAST WITH THE FOLLOWING FORMAT
 contrast_pst = dict(name='presence', conditions=[dict(name='present', include=dict(present=True)),
                                                 dict(name='absent', include=dict(present=False))])
@@ -175,6 +175,6 @@ contrast_seenXlocal = dict(name='seen_X_local', conditions=[
                         dict(name='unseen_S', include=dict(seen=False, local_context='S'))],
                        [dict(name='seen_U', include=dict(seen=True, local_context='U')),
                         dict(name='unseen_U', include=dict(seen=False, local_context='U'))]])
-contrasts = [contrast_seenXlocal]
+contrasts = [contrast_pst]
 epochs_params = [epochs_params[0]]
 epochs_contrasts = [epochs_contrasts[0]]
