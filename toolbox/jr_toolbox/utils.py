@@ -87,6 +87,7 @@ def evoked_spearman(evokeds):
     from scipy.stats import spearmanr
     n_chan, n_time = evokeds['coef'][0].data.shape
     coef = np.zeros((n_chan, n_time))
+    # TODO: need parallelization
     for chan in range(n_chan):
         for t in range(n_time):
             y = range(len(evokeds['coef']))
@@ -94,7 +95,9 @@ def evoked_spearman(evokeds):
             for i in y:
                 X.append(evokeds['coef'][i].data[chan, t])
             coef[chan, t], _ = spearmanr(X, y)
-    return coef
+    evoked = evokeds['coef'][0]
+    evoked.data = coef
+    return evoked
 
 
 def save_to_dict(fname, data, overwrite=False):
