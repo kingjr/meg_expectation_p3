@@ -78,7 +78,7 @@ chan_types = [dict(name='meg', connectivity=meg_connectivity),
               dict(name='eeg', connectivity=None)]
 
 # ICA ##########################################################################
-use_ica = True
+use_ica = False
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'

@@ -7,6 +7,8 @@ import os.path as op
 
 import mne
 
+import numpy as np
+
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import extract_events
@@ -47,7 +49,7 @@ for subject in subjects:
             events_param = dict()
 
         events = extract_events(raw)
-        #print(len(events))
+        print(len(events))
 
         # Save
         mne.write_events(

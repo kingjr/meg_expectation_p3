@@ -265,7 +265,7 @@ def extract_events(raw):
         # stimulus and motor information in each event.
         combined = events[s, 2] + events[inds[0], 2] + events[inds[1], 2]
 
-        # Add ttl value to explicitely differentiate the three events
+        # Add ttl value to explicitly differentiate the three events
         extra_ttl = 2 ** (np.log2(np.max(motor + stim)) + 1)
         # 1st: stim
         new_events.append([events[s, 0], 0, combined + 0 * extra_ttl])
@@ -273,5 +273,4 @@ def extract_events(raw):
         new_events.append([events[inds[0], 0], 0, combined + 1 * extra_ttl])
         # 3rd: second motor response
         new_events.append([events[inds[1], 0], 0, combined + 2 * extra_ttl])
-
     return np.array(new_events)

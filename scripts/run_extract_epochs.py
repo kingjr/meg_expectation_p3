@@ -93,6 +93,10 @@ for subject in subjects:
             epochs = mne.Epochs(raw=raw, picks=picks, preload=True,
                                 events=events_sel, **ep_epochs)
 
+            epochs_letters = mne.Epochs(raw=raw, picks=picks, preload=True,
+                                events=events_sel, **ep_epochs)
+
+
             # Redefine t0 if necessary
             if 'time_shift' in ep.keys():
                 epochs.times += ep['time_shift']
