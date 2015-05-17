@@ -31,15 +31,12 @@ The directory structure should look like this
 open_browser = True
 
 # SUBJECTS #####################################################################
-subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
-            's22_sl130503', 's25_bb100103', 's5_sg120518', 's8_pe110338',
-            's11_ts100368', 's14_ac130389', 's17_ft120490', 's20_ad120286',
-            's23_pf120155', 's26_sb130354', 's6_sb120316', 's9_df130078',
-            's12_aa100234', 's15_nv110179', 's18_rg110386', 's21_jl130434',
-            's24_cl120289', 's4_sa130042', 's7_jm100109']
-# not included: s15_nv110179 (MaxFilter), s19_cd110147 (MaxFilter)
-# s14_ac130389, s17_ft120490 have two sss for certain blocks
-# XXX JRK: This should be solvable!
+subjects = ['s4_sa130042', 's5_sg120518', 's6_sb120316', 's7_jm100109',
+            's8_pe110338', 's9_df130078', 's10_ns110383', 's11_ts100368',
+            's12_aa100234','s13_jn120580','s14_ac130389', 's15_nv110179',
+            's16_mp130429','s17_ft120490','s18_rg110386', 's19_cd110147',
+            's20_ad120286','s21_jl130434','s22_sl130503', 's23_pf120155',
+            's24_cl120289','s25_bb100103','s26_sb130354',]
 
 exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error
 
@@ -47,7 +44,7 @@ subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 5))  # number of runs per subject
 
-# FILRERING ####################################################################
+# FILTERING ####################################################################
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
@@ -78,7 +75,7 @@ chan_types = [dict(name='meg', connectivity=meg_connectivity),
               dict(name='eeg', connectivity=None)]
 
 # ICA ##########################################################################
-use_ica = False
+use_ica = True
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'
@@ -104,38 +101,19 @@ epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
 epochs_motor1 = dict(name='motor1_lock', events='motor1', tmin=-0.500,
                    tmax=0.200, baseline=None, **cfg)
 # XXX JRK: Could add second motor response preproc here
+# Redefined below to only do stim-locked epochs
 epochs_params = [epochs_stim, epochs_motor1]
 
 
 # MAIN CONTRASTS ###############################################################
 # Here define your contrast of interest
-contrasts = (
-            dict(name='present_absent',
-                 include=dict(present=[True, False]),
-                 exclude=dict()),
-            dict(name='seen_unseen',
-                 include=dict(seen=[True, False]),
-                 exclude=dict()),
-            dict(name='pas',
-                 include=dict(pas=[0, 1, 2, 3]),
-                 exclude=dict()),
-            dict(name='global',
-                 include=dict(block=['visible', 'invisible']),
-                 exclude=dict(soa=[17, 83])),
-            dict(name='local',
-                 include=dict(local_context=['S', 'U']),
-                 exclude=dict()),
-            dict(name='soa',
-                 include=dict(soa=[17, 33, 50, 67, 83]),
-                 exclude=dict()),
-            dict(name='seen_X_soa',
-                 include=dict(seen_X_soa=[seen + str(soa)
-                                for seen in ['seen_', 'unseen_']
-                                    for soa in [17, 33, 50, 67, 83]]),
-                exclude=dict())
-            )
+from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
+
+## TODO define contrasts here
+
 
 epochs_contrasts = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
+
 # DECODING #####################################################################
 # preprocessing for memory
 decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
@@ -162,48 +140,9 @@ clu_threshold = 0.05
 
 # TO RUN TESTS #################################################################
 use_ica = False # XXX deal with bad chan first
-# exclude_subjects = ['s10_ns110383', 's13_jn120580', 's16_mp130429', 's19_cd110147',
-#                     's15_nv110179'] # maxfilter error + already done subjects
-# exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error + already done subjects
+
 subjects = ['s4_sa130042']
-# data_path = '/media/jrking/INSERM/data'
-# XXX REDO ALL CONTRAST WITH THE FOLLOWING FORMAT
 
-from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
-# example of simple contrast
-contrast_pst = dict(
-    name='presence', operator=evoked_subtract, conditions=[
-        dict(name='present', include=dict(present=True)),
-        dict(name='absent', include=dict(present=False))])
-
-# example of interaction contrast
-contrast_seenLocalS = dict(
-    name='seenS-unseenS', operator=evoked_subtract, conditions=[
-        dict(name='seen_S', include=dict(seen=True, local_context='S')),
-        dict(name='unseen_S', include=dict(seen=False, local_context='S'))])
-contrast_seenLocalU = dict(
-    name='seenU-unseenU', operator=evoked_subtract, conditions=[
-        dict(name='seen_U', include=dict(seen=True, local_context='U')),
-        dict(name='unseen_U', include=dict(seen=False, local_context='U'))])
-contrast_seenXlocal = dict(
-    name='seen_X_local', operator=evoked_subtract, conditions=[
-        contrast_seenLocalS, contrast_seenLocalU])
-
-# example of simple regressor
-regress_visibility = dict(
-    name='pas', operator=evoked_spearman, conditions=[
-        dict(name='0', include=dict(pas=0)),
-        dict(name='1', include=dict(pas=1)),
-        dict(name='2', include=dict(pas=2)),
-        dict(name='3', include=dict(pas=3))])
-
-# the same only for present trials
-regress_visibility = dict(
-    name='pas', operator=evoked_spearman, conditions=[
-        dict(name=str(idx), include=dict(pas=idx), exclude=dict(present=False))
-        for idx in range(4)])
-
-
-contrasts = [contrast_pst, contrast_seenXlocal, regress_visibility]
+#contrasts = [contrast_pst, contrast_seenXlocal, regress_visibility]
 epochs_params = [epochs_params[0]]
 epochs_contrasts = [epochs_contrasts[0]]
