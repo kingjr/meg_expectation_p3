@@ -5,7 +5,7 @@ import os.path as op
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
-#data_path = '/Volumes/INSERM/data'
+data_path = '/Volumes/INSERM/data'
 
 
 pass_errors = False
