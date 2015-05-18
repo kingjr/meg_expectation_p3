@@ -163,12 +163,12 @@ contrast_seen_pst_mid = dict(
         dict(name='seen', include=dict(seen=True, soa=[33,50,67])),
         dict(name='unseen', include=dict(seen=False, soa=[33,50,67]))])
 
-# Absent, unseen, seen
+# Absent, unseen present, seen present
 regress_abs_seen = dict(
     name='abs_seen', operator=evoked_spearman, conditions=[
         dict(name='absent', include=dict(present=False)),
-        dict(name='seen', include=dict(seen=True)),
-        dict(name='unseen', include=dict(seen=False))])
+        dict(name='seen', include=dict(seen=True), exclude=dict(present=False)),
+        dict(name='unseen', include=dict(seen=False), exclude=dict(present=False))])
 
 # ### 5 SOAs compared to absent
 # regress_soa = dict(
@@ -176,6 +176,7 @@ regress_abs_seen = dict(
 #     dict(name='absent', include=dict(present=False)),
 #     dict(name=str(idx), include=dict(soa=idx)) for idx in soas])
 
+# TODO SOAxPAS?
 
 ## Effects of visibility context
 
@@ -330,7 +331,7 @@ contrast_seenXlocal = dict(
     name='seen_X_local', operator=evoked_subtract, conditions=[
         contrast_seenlocalS, contrast_seenlocalU])
 
-# Local N-1 context, local N-2 context (all trials)
+# TODO Local N-1 context, local N-2 context (all trials)
 # ??? Or regression with all four combinations?
 
 ## Control contrasts
