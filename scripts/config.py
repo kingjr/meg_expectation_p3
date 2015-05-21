@@ -142,7 +142,7 @@ regress_pas_pst = dict(
 regress_pas_mid = dict(
     name='pas_pst_mid', operator=evoked_spearman, conditions=[
         dict(name=str(idx), include=dict(pas=idx,soa=[33,50,67]),
-        exclude=dict(present=False))
+            exclude=dict(present=False))
         for idx in range(4)])
 
 # Seen vs. unseen for all trials
@@ -170,13 +170,24 @@ regress_abs_seen = dict(
         dict(name='seen', include=dict(seen=True), exclude=dict(present=False)),
         dict(name='unseen', include=dict(seen=False), exclude=dict(present=False))])
 
-# ### 5 SOAs compared to absent
-# regress_soa = dict(
-#     name='soa', operator=evoked_spearman, conditions=[
-#     dict(name='absent', include=dict(present=False)),
-#     dict(name=str(idx), include=dict(soa=idx)) for idx in soas])
+# TODO help??
+# 5 SOAs compared to absent
+regress_soa = dict(
+     name='soa', operator=evoked_spearman, conditions=[
+     dict(name='absent', include=dict(present=False)),
+     dict(name=str(idx), include=dict(soa=idx))
+     for idx in enumerate([17, 33, 50, 67, 83])])
 
-# TODO SOAxPAS?
+# TODO what is idx in this case?
+regress_pas_soa = list()
+for idx, soa in enumerate([17, 33, 50, 67, 83]):
+    regress = dict(
+        name = 'pas_regress_soa' +str(soa),
+        operator=evoked_subtract, conditions=[
+            dict(name='pas' + str(pas) + '_soa' + str(soa),
+                   include=dict(pas=pas,soa=soa), exclude=absent)
+            for pas in range(4)])
+    regress_pas_soa.append(regress)
 
 ## Effects of visibility context
 
@@ -186,24 +197,18 @@ contrast_block = dict(
         dict(name='vis', include=dict(block='visible',soa=[33,50,67])),
         dict(name='invis', include=dict(block='invisible',soa=[33,50,67]))])
 
+## Loops starting here
+
 # Global block context, SOA (middle SOAs only)
-contrast_block_33 = dict(
-    name = 'vis33-invis33', operator=evoked_subtract, conditions=[
-        dict(name='vis_33', include=dict(block='visible',soa=33)),
-        dict(name='invis_33', include=dict(block='invisible',soa=33))])
-contrast_block_50 = dict(
-    name = 'vis50-invis50', operator=evoked_subtract, conditions=[
-        dict(name='vis_50', include=dict(block='visible',soa=50)),
-        dict(name='invis_50', include=dict(block='invisible',soa=50))])
-contrast_block_67 = dict(
-    name = 'vis67-invis67', operator=evoked_subtract, conditions=[
-        dict(name='vis_67', include=dict(block='visible',soa=67)),
-        dict(name='invis_67', include=dict(block='invisible',soa=67))])
-
-regress_blockXsoa = dict(
-    name = 'block_X_soa', operator=evoked_spearman,conditions=[
-        contrast_block_33, contrast_block_50, contrast_block_67])
-
+contrast_block_soa = list()
+for idx, soa in enumerate([33, 50, 67]):
+    contrast = dict(
+        name = 'vis' +str(soa) + '-invis' + str(soa),
+        operator=evoked_subtract, conditions=[
+            dict(name='vis_' + str(soa), include=dict(block='visible',soa=soa)),
+            dict(name='invis_' + str(33), include=dict(block='invisible',soa=soa))])
+    contrast_block_soa.append(contrast)
+    
 # Global block context, PAS (middle SOA, presents only)
 contrast_block_pas0=dict(
     name = 'vispas0-invispas0', operator=evoked_subtract, conditions=[
