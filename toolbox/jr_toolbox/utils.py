@@ -343,9 +343,9 @@ class cluster_stat(dict):
 
         # By default, keep meta data from first epoch
         self.epochs = epochs
-        self.times = self.insts[0].times
-        self.info = self.insts[0].info
-        self.ch_names = self.insts[0].ch_names
+        self.times = self.epochs[0].times
+        self.info = self.epochs[0].info
+        self.ch_names = self.epochs[0].ch_names
 
         return
 
@@ -433,7 +433,7 @@ class cluster_stat(dict):
         mask, space_inds, time_inds = self._get_mask(i_clu)
 
         # plot average test statistic and mark significant sensors
-        evoked = self.insts[0].average()
+        evoked = self.epochs.average()
         evoked.data = self.T_obs_.transpose()
         fig = evoked.plot_topomap(mask=np.transpose(mask), **kwargs)
 
@@ -482,18 +482,8 @@ class cluster_stat(dict):
         # Time course
         if plot_type == 'butterfly':
             # Plot butterfly of difference
-            evoked = self.insts[0].average() - self.insts[1].average()
+            evoked = self.epochs.average()
             fig = evoked.plot(axes=axes, show=False, **kwargs)
-        elif plot_type == 'cluster':
-            evokeds = [x.average() for x in self.insts]
-            for i_clu in i_clus:
-                _, space_inds, _ = self._get_mask(i_clu)
-                for i_evo, evoked in enumerate(evokeds):
-                    signal = np.mean(evoked.data[space_inds,:],
-                                     axis=0)
-                    _kwargs = kwargs.copy()
-                    _kwargs['color'] = COLORS[i_evo % len(COLORS)]
-                    axes.plot(times, signal, **_kwargs)
 
         # Significant times
         ymin, ymax = axes.get_ylim()
