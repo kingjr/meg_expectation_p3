@@ -10,7 +10,7 @@ from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
 
-from toolbox.jr_toolbox.utils import build_analysis, save_to_dict
+from toolbox.jr_toolbox.utils import build_analysis
 
 from config import (
     data_path,
@@ -70,6 +70,16 @@ for subject in subjects:
                 fig2, ax2 = plt.subplots(len(evokeds['coef']), len(chan_types))
                 ax2 = np.reshape(ax2, len(evokeds['coef']) * len(chan_types))
 
+                # Save all_evokeds
+                save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
+                    eptyp_name, analysis['name']))
+
+                with open(pkl_fname, 'wb') as f:
+                    pickle.dump([coef, evokeds, analysis, events], f)
+
                 # Loop across channels
                 for ch, chan_type in enumerate(chan_types):
                     # Select specific types of sensor
@@ -118,14 +128,5 @@ for subject in subjects:
                 report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
                     subject, eptyp_name, analysis['name'])), analysis['name'])
 
-            # Save all_evokeds
-            save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%.pickle' % (
-                eptyp_name, analysis['name']))
-
-            with open(pkl_fname, 'wb') as f:
-                pickle.dump([coef, evokeds, analysis, events], f)
 
 report.save(open_browser=open_browser)

@@ -130,13 +130,14 @@ for subject in subjects:
                                  1.*(epochs._data[:,ch,:] < 8192))
 
         fig = mne.viz.plot_image_epochs(epochs, ch, scalings=dict(stim=1),
-                                        units=dict(stim=''), vmin=1, vmax=3)
+                                        units=dict(stim=''), vmin=1, vmax=3,
+                                        show=False)
         report.add_figs_to_section(fig, '%s (%s): triggers' % (subject, name),
                                    'Triggers: ' + name)
 
         #-- % evoked
         evoked = epochs.average()
-        fig = evoked.plot()
+        fig = evoked.plot(show=False)
         report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
                                    'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,

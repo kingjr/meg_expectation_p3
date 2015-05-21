@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 
 import warnings
 
+import mne
+from mne.channels import read_ch_connectivity
+
 from toolbox.jr_toolbox.utils import (cluster_stat, Evokeds_to_Epochs)
 from meeg_preprocessing.utils import setup_provenance
 
-import mne
 
 from scripts.config import (
     data_path,
@@ -26,6 +28,11 @@ from scripts.config import (
 # report, run_id, results_dir, logger = setup_provenance(
 #     script=__file__, results_dir=results_dir)
 
+
+# XXX to be removed once subjects have been preprocessed
+subjects = ['s5_sg120518', 's6_sb120316', 's7_jm100109',
+            's8_pe110338', 's9_df130078', 's10_ns110383', 's11_ts100368',
+            's12_aa100234', 's13_jn120580', 's14_ac130389']
 
 # XXX JRK: With neuromag, should have virtual sensor in the future. For now,
 # only apply stats to mag.
@@ -44,8 +51,8 @@ if 'meg' in [i['name'] for i in chan_types]:
 # for ep in epochs_params:
 ep = epochs_params[0]
 #     for epoch_type in epochs_types:
-epoch_type = epochs_types[1]
-eptype_name = ep['name'] + epoch_type
+epoch_type = epochs_types[0]
+eptyp_name = ep['name'] + epoch_type
 #         for contrast in contrasts:
 #             print(ep['name'] + ':' + contrast)
 #             for analysis in analyses:
@@ -55,30 +62,43 @@ analysis = analyses[1]
 evokeds = list()
 # Gather data across all subjects
 for s, subject in enumerate(subjects):
-    pkl_fname = op.join(
-        data_path, 'MEG', subject, '{}-{}-analysis-ave.pickle'.format(
-            eptype_name, subject))
+    pkl_fname = op.join(data_path, 'MEG', subject, 'evokeds',
+                        '%s-cluster_sensors_%s.pickle' % (
+                            eptyp_name, analysis['name']))
     with open(pkl_fname) as f:
-        coef, evoked = pickle.load(f)
-    evokeds.append(evoked['current'])
-    # XXX warning if subjects has missing condition
+        coef, evoked, _, _ = pickle.load(f)
+    evokeds.append(coef)
+
+epochs = Evokeds_to_Epochs(evokeds)
+# XXX warning if subjects has missing condition
 
 
 # select only evokeds that corresponds to the highest level of contrast
-# XXX
 #                   for chan_type in chan_types:
 chan_type = chan_types[0]
 
 # Take first evoked to retrieve all necessary information
-evoked = evokeds[0][0]
-picks = [evoked.ch_names[ii] for ii in mne.pick_types(
-         evoked.info, meg=chan_type['name'])]
-evoked.pick_channels(picks)
+picks = [epochs.ch_names[ii] for ii in mne.pick_types(
+         epochs.info, meg=chan_type['name'])]
 
 # Stats
-cluster = cluster_stat(evokeds, n_permutations=2 ** 11,
-                       connectivity=chan_type['connectivity'],
+epochs_ = epochs.copy()
+epochs_.pick_channels(picks)
+
+# XXX wont work for eeg
+cluster = cluster_stat(epochs_, n_permutations=2 ** 10,
+                       connectivity=ch_type['connectivity'],
                        threshold=dict(start=1., step=1.), n_jobs=-1)
+# Run stats
+from mne.stats import spatio_temporal_cluster_1samp_test
+
+condition_names = 'Aud_L', 'Aud_R', 'Vis_L', 'Vis_R'
+X = epochs.get_data()  # as 3D matrix
+
+T_obs_, clusters, p_values, _ = \
+    spatio_temporal_cluster_1samp_test(,
+                                       out_type='mask',
+                                       connectivity=connectivity)
 
 # Plots
 i_clus = np.where(cluster.p_values_ < .01)
@@ -90,8 +110,10 @@ fig = cluster.plot(i_clus=i_clus, show=False)
 fig = cluster.plot_topomap(sensors=False, contours=False, show=False)
 
 # Plot contrasted ERF + select sig sensors
-evoked = Evokeds_to_Epochs(evokeds[0]).average() - \
-         Evokeds_to_Epochs(evokeds[-1]).average()
+evoked = epochs.average()
+evoked.pick_channels(picks)
+
+
 # Create mask of significant clusters
 mask, _, _ = cluster._get_mask(i_clus)
 # Define color limits

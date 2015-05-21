@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import warnings
 
 
-def build_contrast(evoked_list, epochs, events, operator=None):
-    """Builds a n-deep contrast where n represents different levels of contrasts
+def build_analysis(evoked_list, epochs, events, operator=None):
+    """Builds a n-deep analysis where n represents different levels of analyses
     Parameters
     ----------
     evoked_list : dict
@@ -25,7 +25,7 @@ def build_contrast(evoked_list, epochs, events, operator=None):
 
     evokeds = dict()
     evokeds['evokeds'] = list()  # list of all evoked from lower level
-    evokeds['coef'] = list()  # evoked of contrast
+    evokeds['coef'] = list()  # evoked of analysis
 
     # Accept passing lists only
     if type(evoked_list) is list:
@@ -51,7 +51,7 @@ def build_contrast(evoked_list, epochs, events, operator=None):
         else:
             if 'operator' not in evoked_list.keys():
                 evoked_list['operator'] = None
-            coef_, evokeds_ = build_contrast(evoked, epochs, events,
+            coef_, evokeds_ = build_analysis(evoked, epochs, events,
                                              evoked_list['operator'])
             evokeds['evokeds'].append(evokeds_)
             evokeds['coef'].append(coef_)
@@ -308,7 +308,7 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
 
 class cluster_stat(dict):
     """ Cluster statistics """
-    def __init__(self, insts, alpha=0.05, **kwargs):
+    def __init__(self, epochs, alpha=0.05, **kwargs):
         """
         Parameters
         ----------
@@ -321,13 +321,13 @@ class cluster_stat(dict):
 
         """
         from mne.stats import spatio_temporal_cluster_1samp_test
-        from mne.channels import read_ch_connectivity
 
         # Convert lists of evoked in Epochs
-        insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
+        if isinstance(epochs, list):
+            epochs = Evokeds_to_Epochs(epochs)
+        X = epochs._data.transpose((0, 2, 1))
 
         # Apply contrast: n * space * time
-        X = np.array(insts[0]._data - insts[-1]._data).transpose([0, 2, 1])
 
         # Run stats
         self.T_obs_, clusters, p_values, _ = \
@@ -335,14 +335,14 @@ class cluster_stat(dict):
 
         # Save sorted sig clusters
         inds = np.argsort(p_values)
-        clusters = np.array(clusters)[inds,:,:]
+        clusters = np.array(clusters)[inds, :, :]
         p_values = p_values[inds]
         inds = np.where(p_values < alpha)[0]
-        self.sig_clusters_ = clusters[inds,:,:]
+        self.sig_clusters_ = clusters[inds, :, :]
         self.p_values_ = p_values[inds]
 
         # By default, keep meta data from first epoch
-        self.insts = insts
+        self.epochs = epochs
         self.times = self.insts[0].times
         self.info = self.insts[0].info
         self.ch_names = self.insts[0].ch_names
