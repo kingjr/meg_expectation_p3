@@ -68,5 +68,6 @@ for subject in subjects:
     unmasked_fname = op.join(data_path, 'MEG', subject,
             '{}-unmasked-{}-epo.fif'.format(ep_name, subject))
     epochs.save(unmasked_fname)
+    # TODO plots?
 
 report.save(open_browser=open_browser)
