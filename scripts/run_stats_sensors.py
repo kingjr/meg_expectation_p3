@@ -45,7 +45,7 @@ if 'meg' in [i['name'] for i in chan_types]:
 ep = epochs_params[0]
 #     for epoch_type in epochs_types:
 epoch_type = epochs_types[1]
-ep_name = ep['name'] + epoch_type
+eptype_name = ep['name'] + epoch_type
 #         for contrast in contrasts:
 #             print(ep['name'] + ':' + contrast)
 #             for analysis in analyses:
@@ -53,14 +53,15 @@ analysis = analyses[1]
 #               for chan_type in chan_types:
 chan_type = chan_types[0]
 
-
-
-# Contrasts
+# Analyses
 evokeds = list()
 # Gather data across all subjects
 for s, subject in enumerate(subjects):
-    ave_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-analysis-ave.pickle'.format(ep['name'],subject))
+    pkl_fname = op.join(
+        data_path, 'MEG', subject, '{}-{}-analysis-ave.pickle'.format(
+            eptype_name, subject))
+    with open(pkl_fname) as f:
+        coef, evoked = pickle.load(f)
     coef, evoked = load_from_dict(ave_fname, contrast['name'], out_type=='list')[0]
     evokeds.append(evoked['current'])
     # XXX warning if subjects has missing condition
