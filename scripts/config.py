@@ -1,11 +1,11 @@
 import os
 import os.path as op
 
-# PATHS ########################################################################
+# PATHS #######################################################################
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
-data_path = '/Volumes/INSERM/data'
+# data_path = '/Volumes/INSERM/data'
 
 
 pass_errors = False
@@ -27,29 +27,29 @@ The directory structure should look like this
 ./data/behavior/
 """
 
-# REPORT #######################################################################
+# REPORT ######################################################################
 open_browser = True
 
-# SUBJECTS #####################################################################
+# SUBJECTS ####################################################################
 subjects = ['s4_sa130042', 's5_sg120518', 's6_sb120316', 's7_jm100109',
             's8_pe110338', 's9_df130078', 's10_ns110383', 's11_ts100368',
-            's12_aa100234','s13_jn120580','s14_ac130389', 's15_nv110179',
-            's16_mp130429','s17_ft120490','s18_rg110386', 's19_cd110147',
-            's20_ad120286','s21_jl130434','s22_sl130503', 's23_pf120155',
-            's24_cl120289','s25_bb100103','s26_sb130354',]
+            's12_aa100234', 's13_jn120580', 's14_ac130389', 's15_nv110179',
+            's16_mp130429', 's17_ft120490', 's18_rg110386', 's19_cd110147',
+            's20_ad120286', 's21_jl130434', 's22_sl130503', 's23_pf120155',
+            's24_cl120289', 's25_bb100103', 's26_sb130354']
 
-exclude_subjects = ['s19_cd110147', 's15_nv110179'] # maxfilter error
+exclude_subjects = ['s19_cd110147', 's15_nv110179']  # maxfilter error
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 5))  # number of runs per subject
 
-# FILTERING ####################################################################
+# FILTERING ###################################################################
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
 
-# FILENAMES ####################################################################
+# FILENAMES ###################################################################
 raw_fname_tmp = '{:s}_main{:d}_sss.fif'
 trans_fname_tmp = 'run_{:02d}_sss-trans.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
