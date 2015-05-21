@@ -107,15 +107,12 @@ evoked.plot_topomap(mask=mask.T, scale=1., sensors=False, contours=False,
 #                            ep['name'] + contrast['name'])
 
 # Save contrast
-pkl_fname = op.join(data_path, 'MEG/fsaverage', '%s-cluster_sensors.pickle' % (ep['name']))
+pkl_fname = op.join(data_path,
+                    'MEG/fsaverage', '%s-cluster_sensors_%.pickle' % (
+                        ep['name'], analysis['name']))
 
-# If file exist, load already save data and append new cluster
-save_var = dict()
-save_var[contrast['name']]=dict(evokeds=evokeds, cluster=cluster,
-                                contrast=contrast, chan_type=chan_type, ep=ep,
-                                subjects=subjects)
-save_to_dict(pkl_fname, save_var, overwrite=True)
-load_from_dict(pkl_fname, save_var, overwrite=True)
+with open(pkl_fname, 'wb') as f:
+    pickle.dump([cluster, evokeds, analysis], f)
 
 # XXX uncomment
 # report.save(open_browser=open_browser)

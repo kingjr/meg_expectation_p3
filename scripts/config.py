@@ -114,6 +114,9 @@ from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
 # Soa only defined for target-present trials.
 # Need to use soa_ttl to include absent.
 
+soas = [17, 33, 50, 67, 83]
+mid_soas = [33, 50, 67]
+
 ## Key contrasts for replication
 
 # Present vs. absent
@@ -170,11 +173,11 @@ regress_abs_seen = dict(
 
 # TODO help??
 # 5 SOAs compared to absent
+
 regress_soa = dict(
      name='soa', operator=evoked_spearman, conditions=[
      dict(name='absent', include=dict(present=False)),
-     dict(name=str(idx), include=dict(soa=idx))
-      for idx in enumerate([17, 33, 50, 67, 83])])
+     [dict(name=str(soa), include=dict(soa=soa)) for soa in soas]])
 
 # TODO what is idx in this case?
 regress_pas_soa = list()
@@ -199,15 +202,23 @@ contrast_block = dict(
 
 # Global block context, SOA (middle SOAs only)
 contrast_block_soa = list()
-for idx, soa in enumerate([33, 50, 67]):
+for soa in [33, 50, 67]:
     contrast = dict(
-        name = 'vis' +str(soa) + '-invis' + str(soa),
+        name='vis' +str(soa) + '-invis' + str(soa),
         operator=evoked_subtract, conditions=[
             dict(name='vis_' + str(soa), include=dict(block='visible',soa=soa)),
-            dict(name='invis_' + str(33), include=dict(block='invisible',soa=soa))])
+            dict(name='invis_' + str(soa), include=dict(block='invisible',soa=soa))])
     contrast_block_soa.append(contrast)
+regression_block_soa = dict(
+    name='regress_block_soa', operator=evoked_spearman,
+    conditions=contrast_block_soa)
 
-# Global block context, PAS (middle SOA, presents only)
+# # Global block context, PAS (middle SOA, presents only)
+# contrast_block_pas = list()
+# for idx, pas in range(4)
+#
+#
+
 contrast_block_pas0=dict(
     name = 'vispas0-invispas0', operator=evoked_subtract, conditions=[
         dict(name='vis_pas0',
@@ -381,7 +392,7 @@ clu_threshold = 0.05
 
 # TO RUN TESTS #################################################################
 use_ica = False # XXX deal with bad chan first
-
+# runs = [1]
 subjects = ['s4_sa130042']
 
 contrasts = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
