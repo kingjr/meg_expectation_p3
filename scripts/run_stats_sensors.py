@@ -40,7 +40,7 @@ if 'meg' in [i['name'] for i in chan_types]:
 # Apply contrast on each type of epoch
 # XXX remove --------------------------
 ep = epochs_contrasts[1]
-contrast = contrasts[1]
+analysis = analyses[1]
 chan_type = chan_types[0]
 # subjects = subjects[:15]
 # XXX ---------------------------------
@@ -54,8 +54,8 @@ evokeds = list()
 # Gather data across all subjects
 for s, subject in enumerate(subjects):
     ave_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-contrasts-ave.pickle'.format(ep['name'],subject))
-    delta, evoked = load_from_dict(ave_fname, contrast['name'], out_type=='list')[0]
+                        '{}-{}-analysis-ave.pickle'.format(ep['name'],subject))
+    coef, evoked = load_from_dict(ave_fname, contrast['name'], out_type=='list')[0]
     evokeds.append(evoked['current'])
     # XXX warning if subjects has missing condition
 

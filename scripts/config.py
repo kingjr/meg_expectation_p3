@@ -364,7 +364,7 @@ contrast_motor = dict(
         dict(name='left', include=dict(letter_resp='left')),
         dict(name='right', include=dict(letter_resp='right'))])
 
-epochs_contrasts = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
+epochs_types = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
 
 # DECODING #####################################################################
 # preprocessing for memory
@@ -395,6 +395,6 @@ use_ica = False # XXX deal with bad chan first
 # runs = [1]
 subjects = ['s4_sa130042']
 
-contrasts = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
+analyses = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
 epochs_params = [epochs_params[0]]
-epochs_contrasts = [epochs_contrasts[0]]
+epochs_types = [epochs_types[0]]

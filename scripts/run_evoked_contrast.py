@@ -8,14 +8,14 @@ from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
 
-from toolbox.jr_toolbox.utils import build_contrast, save_to_dict
+from toolbox.jr_toolbox.utils import build_analysis, save_to_dict
 
 from config import (
     data_path,
     subjects,
     results_dir,
-    epochs_contrasts,
-    contrasts,
+    epochs_analyses,
+    analyses,
     chan_types,
     open_browser,
 )
@@ -38,9 +38,9 @@ for subject in subjects:
     bhv_fname = op.join(data_path, 'behavior',
                         '{}_behaviorMEG.mat'.format(subject[-2:]))
 
-    # Apply contrast on each type of epoch
-    all_epochs = [[]] * len(epochs_contrasts)
-    for epoch_params in epochs_contrasts:
+    # Apply analysis on each type of epoch
+    all_epochs = [[]] * len(epochs_analyses)
+    for epoch_params in epochs_analyses:
         ep_name = epoch_params['name']
         print(ep_name)
 
@@ -51,18 +51,18 @@ for subject in subjects:
         # Get events specific to epoch definition (stim or motor lock)
         events = get_events(epochs.events)
 
-        # Apply each contrast
-        for contrast in contrasts:
-            print(contrast['name'])
-            coef, evokeds = build_contrast(
-                contrast['conditions'], epochs, events,
-                operator=contrast['operator'])
+        # Apply each analysis
+        for analysis in analyses:
+            print(analysis['name'])
+            coef, evokeds = build_analysis(
+                analysis['conditions'], epochs, events,
+                operator=analysis['operator'])
 
             # Prepare plot delta (subtraction, or regression)
             fig1, ax1 = plt.subplots(1, len(chan_types))
             if type(ax1) not in [list, np.ndarray]:
                 ax1 = [ax1]
-            # Prepare plot all conditions at top level of contrast
+            # Prepare plot all conditions at top level of analysis
             fig2, ax2 = plt.subplots(len(evokeds['coef']), len(chan_types))
             ax2 = np.reshape(ax2, len(evokeds['coef']) * len(chan_types))
 
@@ -89,7 +89,7 @@ for subject in subjects:
                 ax1[ch].set_adjustable('box-forced')
 
                 # --------------------------------------------------------------
-                # Plot all conditions at top level of contrast
+                # Plot all conditions at top level of analysis
                 # XXX only works for +:- data
                 mM = np.median([np.percentile(abs(e.data[picks, :]), 80.)
                                 for e in evokeds['coef']])
@@ -109,18 +109,18 @@ for subject in subjects:
 
             # Save figure
             report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
-                subject, ep_name, contrast['name'])), contrast['name'])
+                subject, ep_name, analysis['name'])), analysis['name'])
 
             report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-                subject, ep_name, contrast['name'])), contrast['name'])
+                subject, ep_name, analysis['name'])), analysis['name'])
 
         # Save all_evokeds
         ave_fname = op.join(
-            data_path, 'MEG', subject, '{}-{}-contrasts-ave.pickle'.format(
+            data_path, 'MEG', subject, '{}-{}-analyses-ave.pickle'.format(
                 ep_name, subject))
         save_dict = dict()
-        save_dict[contrast['name']] = dict(coef=coef, evokeds=evokeds,
-                                           contrast=contrast, events=events)
+        save_dict[analysis['name']] = dict(coef=coef, evokeds=evokeds,
+                                           analysis=analysis, events=events)
         save_to_dict(ave_fname, save_dict)
 
 report.save(open_browser=open_browser)
