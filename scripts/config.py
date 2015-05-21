@@ -71,8 +71,11 @@ if not op.exists(results_dir):
 
 # SELECTION ###################################################################
 from mne.channels import read_ch_connectivity
-meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
-chan_types = [dict(name='meg', connectivity=meg_connectivity),
+mag_connectivity, _ = read_ch_connectivity('neuromag306mag')
+grad_connectivity, _ = read_ch_connectivity('neuromag306planar')
+
+chan_types = [dict(name='mag', connectivity=mag_connectivity),
+              dict(name='grad', connectivity=grad_connectivity),
               dict(name='eeg', connectivity=None)]
 
 # ICA #########################################################################

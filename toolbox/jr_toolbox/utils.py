@@ -321,12 +321,11 @@ class cluster_stat(dict):
 
         """
         from mne.stats import spatio_temporal_cluster_1samp_test
-        from mne.channels import read_ch_connectivity
 
         # Convert lists of evoked in Epochs
         if isinstance(epochs, list):
             epochs = Evokeds_to_Epochs(epochs)
-        X = epochs._data
+        X = epochs._data.transpose((0, 2, 1))
 
         # Apply contrast: n * space * time
 
