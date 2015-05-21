@@ -60,7 +60,9 @@ for s, subject in enumerate(subjects):
             eptype_name, subject))
     with open(pkl_fname) as f:
         coef, evoked = pickle.load(f)
-    evokeds.append(evoked['current'])
+    evokeds.append(coef)
+
+epochs = Evokeds_to_Epochs(evokeds)
     # XXX warning if subjects has missing condition
 
 
@@ -76,7 +78,7 @@ picks = [evoked.ch_names[ii] for ii in mne.pick_types(
 evoked.pick_channels(picks)
 
 # Stats
-cluster = cluster_stat(evokeds, n_permutations=2 ** 11,
+cluster = cluster_stat(epochs, n_permutations=2 ** 11,
                        connectivity=chan_type['connectivity'],
                        threshold=dict(start=1., step=1.), n_jobs=-1)
 
@@ -90,8 +92,8 @@ fig = cluster.plot(i_clus=i_clus, show=False)
 fig = cluster.plot_topomap(sensors=False, contours=False, show=False)
 
 # Plot contrasted ERF + select sig sensors
-evoked = Evokeds_to_Epochs(evokeds[0]).average() - \
-         Evokeds_to_Epochs(evokeds[-1]).average()
+evoked = Evokeds_to_Epochs(evokeds).average()
+
 # Create mask of significant clusters
 mask, _, _ = cluster._get_mask(i_clus)
 # Define color limits

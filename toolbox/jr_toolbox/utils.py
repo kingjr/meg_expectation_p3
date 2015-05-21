@@ -308,7 +308,7 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
 
 class cluster_stat(dict):
     """ Cluster statistics """
-    def __init__(self, insts, alpha=0.05, **kwargs):
+    def __init__(self, epochs, alpha=0.05, **kwargs):
         """
         Parameters
         ----------
@@ -324,10 +324,11 @@ class cluster_stat(dict):
         from mne.channels import read_ch_connectivity
 
         # Convert lists of evoked in Epochs
-        insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
+        if isinstance(epochs, list):
+            epochs = Evokeds_to_Epochs(epochs)
+        X = epochs._data
 
         # Apply contrast: n * space * time
-        X = np.array(insts[0]._data - insts[-1]._data).transpose([0, 2, 1])
 
         # Run stats
         self.T_obs_, clusters, p_values, _ = \
@@ -335,14 +336,14 @@ class cluster_stat(dict):
 
         # Save sorted sig clusters
         inds = np.argsort(p_values)
-        clusters = np.array(clusters)[inds,:,:]
+        clusters = np.array(clusters)[inds, :, :]
         p_values = p_values[inds]
         inds = np.where(p_values < alpha)[0]
-        self.sig_clusters_ = clusters[inds,:,:]
+        self.sig_clusters_ = clusters[inds, :, :]
         self.p_values_ = p_values[inds]
 
         # By default, keep meta data from first epoch
-        self.insts = insts
+        self.epochs = epochs
         self.times = self.insts[0].times
         self.info = self.insts[0].info
         self.ch_names = self.insts[0].ch_names
