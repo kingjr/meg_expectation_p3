@@ -1,3 +1,5 @@
+import pickle
+import os
 import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,12 +45,12 @@ for subject in subjects:
     all_epochs = [[]] * len(epochs_params)
     for epoch_params in epochs_params:
         for epoch_type in epochs_types:
-            ep_name = epoch_params['name'] + epoch_type
-            print(ep_name)
+            eptyp_name = epoch_params['name'] + epoch_type
+            print(eptyp_name)
 
             # Get MEG data
             epo_fname = op.join(data_path, 'MEG', subject,
-                                '{}-{}-epo.fif'.format(ep_name, subject))
+                                '{}-{}-epo.fif'.format(eptyp_name, subject))
             epochs = mne.read_epochs(epo_fname)
             # Get events specific to epoch definition (stim or motor lock)
             events = get_events(epochs.events)
@@ -111,19 +113,19 @@ for subject in subjects:
 
                 # Save figure
                 report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
-                    subject, ep_name, analysis['name'])), analysis['name'])
+                    subject, eptyp_name, analysis['name'])), analysis['name'])
 
                 report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-                    subject, ep_name, analysis['name'])), analysis['name'])
+                    subject, eptyp_name, analysis['name'])), analysis['name'])
 
             # Save all_evokeds
-            ave_fname = op.join(
-                data_path, 'MEG', subject, '{}-{}-analyses-ave.pickle'.format(
-                    ep_name, subject))
-            save_dict = dict()
-            save_dict[analysis['name']] = dict(coef=coef, evokeds=evokeds,
-                                               analysis=analysis,
-                                               events=events)
-            save_to_dict(ave_fname, save_dict)
+            save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%.pickle' % (
+                eptyp_name, analysis['name']))
+
+            with open(pkl_fname, 'wb') as f:
+                pickle.dump([coef, evokeds, analysis, events], f)
 
 report.save(open_browser=open_browser)
