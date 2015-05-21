@@ -50,8 +50,6 @@ eptype_name = ep['name'] + epoch_type
 #             print(ep['name'] + ':' + contrast)
 #             for analysis in analyses:
 analysis = analyses[1]
-#               for chan_type in chan_types:
-chan_type = chan_types[0]
 
 # Analyses
 evokeds = list()
@@ -62,18 +60,19 @@ for s, subject in enumerate(subjects):
             eptype_name, subject))
     with open(pkl_fname) as f:
         coef, evoked = pickle.load(f)
-    coef, evoked = load_from_dict(ave_fname, contrast['name'], out_type=='list')[0]
     evokeds.append(evoked['current'])
     # XXX warning if subjects has missing condition
 
 
 # select only evokeds that corresponds to the highest level of contrast
 # XXX
-#         for chan_type in chan_types:
+#                   for chan_type in chan_types:
+chan_type = chan_types[0]
 
-# take first evoked to retrieve all necessary information
+# Take first evoked to retrieve all necessary information
 evoked = evokeds[0][0]
-picks = [evoked.ch_names[ii] for ii in mne.pick_types(evoked.info, meg=chan_type['name'])]
+picks = [evoked.ch_names[ii] for ii in mne.pick_types(
+         evoked.info, meg=chan_type['name'])]
 evoked.pick_channels(picks)
 
 # Stats
