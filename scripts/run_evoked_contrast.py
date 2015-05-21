@@ -10,7 +10,7 @@ from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
 
-from toolbox.jr_toolbox.utils import build_analysis, save_to_dict
+from toolbox.jr_toolbox.utils import build_analysis
 
 from config import (
     data_path,
