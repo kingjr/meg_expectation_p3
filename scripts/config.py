@@ -114,8 +114,6 @@ from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
 # Soa only defined for target-present trials.
 # Need to use soa_ttl to include absent.
 
-soas=[17, 33, 50, 67, 83]
-
 ## Key contrasts for replication
 
 # Present vs. absent
@@ -176,7 +174,7 @@ regress_soa = dict(
      name='soa', operator=evoked_spearman, conditions=[
      dict(name='absent', include=dict(present=False)),
      dict(name=str(idx), include=dict(soa=idx))
-     for idx in enumerate([17, 33, 50, 67, 83])])
+      for idx in enumerate([17, 33, 50, 67, 83])])
 
 # TODO what is idx in this case?
 regress_pas_soa = list()
@@ -185,7 +183,7 @@ for idx, soa in enumerate([17, 33, 50, 67, 83]):
         name = 'pas_regress_soa' +str(soa),
         operator=evoked_subtract, conditions=[
             dict(name='pas' + str(pas) + '_soa' + str(soa),
-                   include=dict(pas=pas,soa=soa), exclude=absent)
+                   include=dict(pas=pas,soa=soa), exclude=dict(present=False))
             for pas in range(4)])
     regress_pas_soa.append(regress)
 
@@ -208,7 +206,7 @@ for idx, soa in enumerate([33, 50, 67]):
             dict(name='vis_' + str(soa), include=dict(block='visible',soa=soa)),
             dict(name='invis_' + str(33), include=dict(block='invisible',soa=soa))])
     contrast_block_soa.append(contrast)
-    
+
 # Global block context, PAS (middle SOA, presents only)
 contrast_block_pas0=dict(
     name = 'vispas0-invispas0', operator=evoked_subtract, conditions=[
