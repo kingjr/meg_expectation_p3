@@ -1,12 +1,12 @@
 import os.path as op
+import copy
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
 import warnings
 
-from toolbox.jr_toolbox.utils import (cluster_stat, Evokeds_to_Epochs,
-                                      save_to_dict)
+from toolbox.jr_toolbox.utils import (cluster_stat, Evokeds_to_Epochs)
 from meeg_preprocessing.utils import setup_provenance
 
 import mne
@@ -14,11 +14,12 @@ import mne
 from scripts.config import (
     data_path,
     subjects,
+    epochs_params,
+    epochs_types,
+    analyses,
+    chan_types,
     results_dir,
-    epochs_contrasts,
-    open_browser,
-    contrasts,
-    chan_types
+    open_browser
 )
 
 # XXX uncomment
@@ -29,24 +30,29 @@ from scripts.config import (
 # XXX JRK: With neuromag, should have virtual sensor in the future. For now,
 # only apply stats to mag.
 if 'meg' in [i['name'] for i in chan_types]:
-    import copy
     # find 'meg' ch_type
     i = [i for i, le_dict in enumerate(chan_types)
-               if le_dict['name'] == 'meg'][0]
+         if le_dict['name'] == 'meg'][0]
     meg_type = chan_types[i].copy()
     meg_type.pop('name', None)
     chan_types[i] = dict(name='mag', **meg_type)
 
 # Apply contrast on each type of epoch
 # XXX remove --------------------------
-ep = epochs_contrasts[1]
-analysis = analyses[1]
-chan_type = chan_types[0]
 # subjects = subjects[:15]
 # XXX ---------------------------------
-# for ep in epochs_contrasts:
-#     for contrast in contrasts:
-#         print(ep['name'] + ':' + contrast)
+# for ep in epochs_params:
+ep = epochs_params[0]
+#     for epoch_type in epochs_types:
+epoch_type = epochs_types[1]
+ep_name = ep['name'] + epoch_type
+#         for contrast in contrasts:
+#             print(ep['name'] + ':' + contrast)
+#             for analysis in analyses:
+analysis = analyses[1]
+#               for chan_type in chan_types:
+chan_type = chan_types[0]
+
 
 
 # Contrasts
