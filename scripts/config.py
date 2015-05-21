@@ -5,7 +5,7 @@ import os.path as op
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
-# data_path = '/Volumes/INSERM/data'
+data_path = '/Volumes/INSERM/data'
 
 
 pass_errors = False
@@ -143,5 +143,5 @@ clu_threshold = 0.05
 # TO RUN TESTS ################################################################
 use_ica = False  # XXX deal with bad chan first
 # runs = [1]
-subjects = ['s4_sa130042']
+# subjects = ['s4_sa130042']
 epochs_params = [epochs_params[0]]
