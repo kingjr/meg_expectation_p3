@@ -122,7 +122,7 @@ for subject in subjects:
             save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
-            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%.pickle' % (
+            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
                 eptyp_name, analysis['name']))
 
             with open(pkl_fname, 'wb') as f:
