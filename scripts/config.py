@@ -86,7 +86,7 @@ ica_decim = 50
 
 # EVENTS #######################################################################
 
-events_params = dict()
+events_params = [dict(name='stim_lock')]
 
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock
@@ -99,10 +99,14 @@ cfg = dict(event_id=event_id, decim=4)
 epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
                    tmax=1.000, baseline=[-.500, -.100], **cfg)
 epochs_motor1 = dict(name='motor1_lock', events='motor1', tmin=-0.500,
-                   tmax=0.200, baseline=None, **cfg)
+                     tmax=0.200, baseline=None, **cfg)
+epochs_params = [epochs_stim, epochs_motor1]
 # XXX JRK: Could add second motor response preproc here
 # Redefined below to only do stim-locked epochs
-epochs_params = [epochs_stim, epochs_motor1]
+# epochs_types = [dict(name='stim_lock'), dict(name='stim_lock-unmasked'),
+#                 dict(name='resp_lock'), dict(name='resp_lock-unmasked')]
+epochs_types = ['', '-unmasked']
+
 
 
 # MAIN CONTRASTS ###############################################################
@@ -364,7 +368,7 @@ contrast_motor = dict(
         dict(name='left', include=dict(letter_resp='left')),
         dict(name='right', include=dict(letter_resp='right'))])
 
-epochs_types = [dict(name='stim_lock'), dict(name='stim_lock-unmasked')]
+
 
 # DECODING #####################################################################
 # preprocessing for memory
@@ -397,4 +401,3 @@ subjects = ['s4_sa130042']
 
 analyses = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
 epochs_params = [epochs_params[0]]
-epochs_types = [epochs_types[0]]
