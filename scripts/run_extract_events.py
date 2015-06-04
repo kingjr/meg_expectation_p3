@@ -33,6 +33,7 @@ if len(sys.argv) > 1:
     mkl.set_num_threads(1)
 
 for subject in subjects:
+    print(subject)
     this_path = op.join(data_path, 'MEG', subject)
     for r in runs:
         fname = op.join(this_path, raw_fname_filt_tmp.format(r))
