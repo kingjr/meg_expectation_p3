@@ -167,28 +167,34 @@ def get_events(events):
         # XXX Define this only when you'll analyze it
         # # Seen/Unseen (0,1 vs. 2,3)
         # if event['pas'] < 2:
-        #     event['seen'] = 0
+        #     event['seen'] = 'seen'
         # elif event['pas'] > 1:
-        #     event['seen'] = 1
+        #     event['seen'] = 'unseen'
         # else:
         #     event['seen'] = None
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
-            event['seen'] = False
+            event['seen'] = 'unseen'
         elif event['pas'] > 0:
-            event['seen'] = True
+            event['seen'] = 'seen'
         else:
             event['seen'] = None
 
         # Interaction seen SOA
+        # TODO TEST THIS??
         # XXX Should find to way to make interactions automatically
-        if event['seen'] == True:
-            event['seen_X_soa'] = 'seen_' + str(event['soa'])
-        elif event['seen'] == False:
-            event['seen_X_soa'] = 'unseen_' + str(event['soa'])
+        if event['seen']:
+            event['seen_X_soa'] = event['seen']+str(event['soa'])
         else:
             event['seen_X_soa'] = None
+
+        # if event['seen'] == True:
+        #     event['seen_X_soa'] = 'seen_' + str(event['soa'])
+        # elif event['seen'] == False:
+        #     event['seen_X_soa'] = 'unseen_' + str(event['soa'])
+        # else:
+        #     event['seen_X_soa'] = None
 
         # Block
         if ((trigger_stim % 2) == 1):
