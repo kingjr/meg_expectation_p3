@@ -1,7 +1,5 @@
 from toolbox.jr_toolbox.utils import evoked_subtract, evoked_spearman
 
-# TODO check these contrasts
-# before name means syntax error
 # Soa only defined for target-present trials.
 # Need to use soa_ttl to include absent.
 
@@ -19,60 +17,58 @@ contrast_pst = dict(
 # PAS for all trials
 regress_pas = dict(
     name='pas_all', operator=evoked_spearman, conditions=[
-        dict(name='0', include=dict(pas=0)),
-        dict(name='1', include=dict(pas=1)),
-        dict(name='2', include=dict(pas=2)),
-        dict(name='3', include=dict(pas=3))])
+        dict(name=str(pas),include=dict(pas=pas))
+        for pas in range(4)])
 
 # PAS for present trials only
 regress_pas_pst = dict(
     name='pas_pst', operator=evoked_spearman, conditions=[
-        dict(name=str(idx), include=dict(pas=idx), exclude=dict(present=False))
-        for idx in range(4)])
+        dict(name=str(pas), include=dict(pas=pas), exclude=dict(present=False))
+        for pas in range(4)])
 
 # PAS for present middle SOA trials only
 regress_pas_mid = dict(
     name='pas_pst_mid', operator=evoked_spearman, conditions=[
-        dict(name=str(idx), include=dict(pas=idx,soa=[33,50,67]),
+        dict(name=str(idx), include=dict(pas=idx,soa=mid_soas),
             exclude=dict(present=False))
         for idx in range(4)])
+
+# TODO can we streamline these with the new definition of seen (i.e.,
+# seen/unseen whereas before it was true/false)?
 
 # Seen vs. unseen for all trials
 contrast_seen_all = dict(
     name='seen_all', operator=evoked_subtract, conditions=[
-        dict(name='seen', include=dict(seen=True)),
-        dict(name='unseen', include=dict(seen=False))])
+        dict(name='seen', include=dict(seen='seen')),
+        dict(name='unseen', include=dict(seen='unseen'))])
 
 # Seen vs. unseen for present trials only
 contrast_seen_pst = dict(
     name='seen_pst', operator=evoked_subtract, conditions=[
-        dict(name='seen', include=dict(seen=True), exclude=dict(present=False)),
-        dict(name='unseen', include=dict(seen=False), exclude=dict(present=False))])
+        dict(name='seen', include=dict(seen='seen'), exclude=dict(present=False)),
+        dict(name='unseen', include=dict(seen='unseen'), exclude=dict(present=False))])
 
 # Seen vs. unseen for present middle SOA trials
 contrast_seen_pst_mid = dict(
     name='seen_pst_mid', operator=evoked_subtract, conditions=[
-        dict(name='seen', include=dict(seen=True, soa=[33,50,67])),
-        dict(name='unseen', include=dict(seen=False, soa=[33,50,67]))])
+        dict(name='seen', include=dict(seen='seen', soa=mid_soas)),
+        dict(name='unseen', include=dict(seen='unseen', soa=mid_soas))])
 
 # Absent, unseen present, seen present
 regress_abs_seen = dict(
     name='abs_seen', operator=evoked_spearman, conditions=[
         dict(name='absent', include=dict(present=False)),
-        dict(name='seen', include=dict(seen=True), exclude=dict(present=False)),
-        dict(name='unseen', include=dict(seen=False), exclude=dict(present=False))])
+        dict(name='seen', include=dict(seen='seen'), exclude=dict(present=False)),
+        dict(name='unseen', include=dict(seen='unseen'), exclude=dict(present=False))])
 
-# TODO help??
 # 5 SOAs compared to absent
-
 regress_soa = dict(
      name='soa', operator=evoked_spearman, conditions=[
      dict(name='absent', include=dict(present=False)),
      [dict(name=str(soa), include=dict(soa=soa)) for soa in soas]])
 
-# TODO what is idx in this case?
 regress_pas_soa = list()
-for idx, soa in enumerate([17, 33, 50, 67, 83]):
+for soa in soas:
     regress = dict(
         name = 'pas_regress_soa' +str(soa),
         operator=evoked_subtract, conditions=[
@@ -80,93 +76,61 @@ for idx, soa in enumerate([17, 33, 50, 67, 83]):
                    include=dict(pas=pas,soa=soa), exclude=dict(present=False))
             for pas in range(4)])
     regress_pas_soa.append(regress)
+# TODO add regression???
 
-## Effects of visibility context
+# Effects of visibility context
 
 # Global block context (middle SOAs only)
 contrast_block = dict(
     name='block',operator=evoked_subtract, condtions=[
-        dict(name='vis', include=dict(block='visible',soa=[33,50,67])),
-        dict(name='invis', include=dict(block='invisible',soa=[33,50,67]))])
-
-## Loops starting here
+        dict(name='vis', include=dict(block='visible',soa=mid_soas)),
+        dict(name='invis', include=dict(block='invisible',soa=mid_soas))])
 
 # Global block context, SOA (middle SOAs only)
 contrast_block_soa = list()
-for soa in [33, 50, 67]:
+for soa in mid_soas:
     contrast = dict(
         name='vis' +str(soa) + '-invis' + str(soa),
         operator=evoked_subtract, conditions=[
             dict(name='vis_' + str(soa), include=dict(block='visible',soa=soa)),
             dict(name='invis_' + str(soa), include=dict(block='invisible',soa=soa))])
     contrast_block_soa.append(contrast)
-regression_block_soa = dict(
+regress_block_soa = dict(
     name='regress_block_soa', operator=evoked_spearman,
     conditions=contrast_block_soa)
 
-# # Global block context, PAS (middle SOA, presents only)
-# contrast_block_pas = list()
-# for idx, pas in range(4)
-#
-#
+# Global block context, PAS (middle SOA, present only)
+contrast_block_pas = list()
+for pas in range(4):
+    contrast = dict(
+        name = 'vis' + str(pas) + '-invis' + str(pas),
+        operator=evoked_subtract, conditions=[
+            dict(name='vis_' + str(pas),
+                include=dict(block='visible',pas=pas,soas=mid_soas),
+                exclude=dict(present=False)),
+            dict(name='invis_'+str(pas),
+                include=dict(block='invisible',pas=pas,soas=mid_soas),
+                exclude=dict(present=False))])
+    contrast_block_pas.append(contrast)
+regress_block_pas = dict(
+    name='regress_block_pas', operator=evoked_spearman,
+    conditions=contrast_block_pas)
 
-contrast_block_pas0=dict(
-    name = 'vispas0-invispas0', operator=evoked_subtract, conditions=[
-        dict(name='vis_pas0',
-        include=dict(block='visible', pas=0, soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='invis_pas0',
-        include=dict(block='invisible', pas=0, soa=[33,50,67]),
-        exclude=dict(present=False))])
-contrast_block_pas1=dict(
-    name = 'vispas1-invispas1', operator=evoked_subtract, conditions=[
-        dict(name='vis_pas1',
-        include=dict(block='visible', pas=1, soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='invis_pas1',
-        include=dict(block='invisible', pas=1, soa=[33,50,67]),
-        exclude=dict(present=False))])
-contrast_block_pas2=dict(
-    name = 'vispas2-invispas2', operator=evoked_subtract, conditions=[
-        dict(name='vis_pas2',
-        include=dict(block='visible', pas=2, soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='invis_pas2',
-        include=dict(block='invisible', pas=2, soa=[33,50,67]),
-        exclude=dict(present=False))])
-contrast_block_pas3=dict(
-    name = 'vispas3-invispas3', operator=evoked_subtract, conditions=[
-        dict(name='vis_pas3',
-        include=dict(block='visible', pas=3, soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='invis_pas3',
-        include=dict(block='invisible', pas=3, soa=[33,50,67]),
-        exclude=dict(present=False))])
-regress_blockXsoa = dict(
-    name = 'block_X_soa', operator=evoked_spearman,conditions=[
-        contrast_block_pas0, contrast_block_pas1, contrast_block_pas2,
-        contrast_block_pas3])
+# TODO Double check this!!
 
 # Global block context, seen/unseen (middle SOAs only)
-contrast_seenvis = dict(
-    name='seenvis-unseenvis', operator=evoked_subtract, condtions=[
-        dict(name='seen_vis',
-        include=dict(seen=True, block='visible', soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='unseen_vis',
-        include=dict(seen=False, block='visible', soa=[33,50,67]),
-        exclude=dict(present=False))])
-contrast_seeninvis = dict(
-    name='seeninvis-unseeninvis', operator=evoked_subtract, condtions=[
-        dict(name='seen_invis',
-        include=dict(seen=True, block='invisible', soa=[33,50,67]),
-        exclude=dict(present=False)),
-        dict(name='unseen_invis',
-        include=dict(seen=False, block='invisible', soa=[33,50,67]),
-        exclude=dict(present=False))])
-contrast_seenXblock = dict(
-    name='seen_X_block', operator=evoked_subtract, conditions=[
-        contrast_seenvis, contrast_seeninvis])
+contrast_seen_block = list()
+for idx, block in enumerate(['visible','invisible']):
+    contrast = dict(
+        name='seen' + block[:-4] + '-unseen' + block[:-4],
+        operator = evoked_subtract, conditions =[
+            dict(name=seen+block[:-4], include=dict(seen=seen,block=block,
+                soa=mid_soas))
+            for idx, seen in enumerate(['seen','unseen'])])
+    contrast_seen_block.append(contrast)
+contrast_seen_block = dict(
+    name='contrast_seen_block', operator=evoked_subtract,
+        conditions=[contrast_seen_block])
 
 # Local N-1 context (all trials)
 contrast_local = dict(
@@ -175,66 +139,44 @@ contrast_local = dict(
         dict(name='localU', include=dict(local_context='U'))])
 
 # Local N-1 context, SOA (all trials)
-contrast_local17 = dict(
-    name='localS17-localU17', operator=evoked_subtract,conditions=[
-        dict(name='localS17',include=dict(local_context='S',soa_ttl=17)),
-        dict(name='localU17',include=dict(local_context='U',soa_ttl=17))])
-contrast_local33 = dict(
-    name='localS33-localU33', operator=evoked_subtract,conditions=[
-        dict(name='localS33',include=dict(local_context='S',soa_ttl=33)),
-        dict(name='localU33',include=dict(local_context='U',soa_ttl=33))])
-contrast_local50 = dict(
-    name='localS50-localU50', operator=evoked_subtract,conditions=[
-        dict(name='localS50',include=dict(local_context='S',soa_ttl=50)),
-        dict(name='localU50',include=dict(local_context='U',soa_ttl=50))])
-contrast_local67 = dict(
-    name='localS67-localU67', operator=evoked_subtract,conditions=[
-        dict(name='localS67',include=dict(local_context='S',soa_ttl=67)),
-        dict(name='localU67',include=dict(local_context='U',soa_ttl=67))])
-contrast_local83 = dict(
-    name='localS83-localU83', operator=evoked_subtract,conditions=[
-        dict(name='localS83',include=dict(local_context='S',soa_ttl=83)),
-        dict(name='localU83',include=dict(local_context='U',soa_ttl=83))])
-regress_localXsoa = dict(
-    name='local_X_soa', operator=evoked_spearman, conditions=[
-        contrast_local17, contrast_local33, contrast_local50, contrast_local67,
-        contrast_local83])
-
+contrast_local_soa = list()
+for soa in soas:
+    contrast = dict(
+        name='localS'+str(soa)+'-localU'+str(soa),
+        operator = evoked_subtract, conditions = [
+            dict(name='localS'+str(soa), include=dict(local_context='S',soa_ttl=soa)),
+            dict(name='localU'+str(soa), include=dict(local_context='U',soa_ttl=soa))])
+    contrast_local_soa.append(contrast)
+regress_local_soa = dict(
+    name='regress_local_soa',operator=evoked_spearman,
+    conditions=contrast_local_soa)
 
 # Local N-1 context, PAS (all trials)
-contrast_localpas0 = dict(
-    name='localSpas0-localUpas0', operator=evoked_subtract,conditions=[
-        dict(name='localSpas0',include=dict(local_context='S',pas=0)),
-        dict(name='localUpas0',include=dict(local_context='U',pas=0))])
-contrast_localpas1 = dict(
-    name='localSpas1-localUpas1', operator=evoked_subtract,conditions=[
-        dict(name='localSpas1',include=dict(local_context='S',pas=1)),
-        dict(name='localUpas1',include=dict(local_context='U',pas=1))])
-contrast_localpas2 = dict(
-    name='localSpas2-localUpas2', operator=evoked_subtract,conditions=[
-        dict(name='localSpas2',include=dict(local_context='S',pas=2)),
-        dict(name='localUpas2',include=dict(local_context='U',pas=2))])
-contrast_localpas3 = dict(
-    name='localSpas3-localUpas3', operator=evoked_subtract,conditions=[
-        dict(name='localSpas3',include=dict(local_context='S',pas=3)),
-        dict(name='localUpas3',include=dict(local_context='U',pas=3))])
-regress_localXpas = dict(
-    name='local_X_pas', operator=evoked_spearman, conditions=[
-    contrast_localpas0, contrast_localpas1, contrast_localpas2,
-    contrast_localpas3])
+contrast_local_pas = list()
+for pas in range(4):
+    contrast = dict(
+        name='localSpas'+str(pas) + '-localUpas'+str(pas),
+        operator = evoked_subtract, conditions = [
+            dict(name='localSpas'+str(pas), include=dict(local_context='S', pas=pas)),
+            dict(name='localUpas'+str(pas), include=dict(local_context='U', pas=pas))])
+    contrast_local_pas.append(contrast)
+regress_local_pas = dict(
+    name='regress_local_pas', operator=evoked_spearman,
+    conditions=contrast_local_pas)
 
-# Local N-1 context, seen/unseen (all trials) # TODO flip this order to match others??
-contrast_seenlocalS = dict(
-    name='seenS-unseenS', operator=evoked_subtract, conditions=[
-        dict(name='seen_S', include=dict(seen=True, local_context='S')),
-        dict(name='unseen_S', include=dict(seen=False, local_context='S'))])
-contrast_seenlocalU = dict(
-    name='seenU-unseenU', operator=evoked_subtract, conditions=[
-        dict(name='seen_U', include=dict(seen=True, local_context='U')),
-        dict(name='unseen_U', include=dict(seen=False, local_context='U'))])
-contrast_seenXlocal = dict(
-    name='seen_X_local', operator=evoked_subtract, conditions=[
-        contrast_seenlocalS, contrast_seenlocalU])
+# Local N-1 context, seen/unseen (all trials)
+
+contrast_local_seen = list()
+for idx, local in enumerate(['S','U']):
+    contrast = dict(
+        name='seenlocal'+local+'-unseen'+local,
+        operator = evoked_subtract, conditions = [
+            dict(name=seen+local, include=dict(seen=seen, local_context=local))
+            for idx, seen in enumerate(['seen','unseen'])])
+    contrast_local_seen.append(contrast)
+contrast_local_seen = dict(
+    name='contrast_local_seen', operator=evoked_subtract,
+        conditions=[contrast_local_seen])
 
 # TODO Local N-1 context, local N-2 context (all trials)
 # ??? Or regression with all four combinations?
@@ -255,5 +197,11 @@ contrast_motor = dict(
         dict(name='left', include=dict(letter_resp='left')),
         dict(name='right', include=dict(letter_resp='right'))])
 
+analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
+            contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
+            regress_abs_seen, regress_soa, contrast_block, regress_block_soa,
+            regress_block_pas, contrast_seen_block, contrast_local,
+            regress_local_soa, regress_local_pas, contrast_local_seen,
+            contrast_target, contrast_motor]
 
 analyses = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
