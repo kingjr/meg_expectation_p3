@@ -204,4 +204,4 @@ analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             regress_local_soa, regress_local_pas, contrast_local_seen,
             contrast_target, contrast_motor]
 
-analyses = [contrast_pst, contrast_seenXlocal, regress_pas_pst]
+analyses = [contrast_pst, contrast_local_seen, regress_pas_pst]
