@@ -65,14 +65,6 @@ for subject in subjects:
         if 'eeg' in [i['name'] for i in chan_types] and len(raw.info['bads']) > 0:
             raw.interpolate_bad_channels()
 
-        # Select MEG channels
-        picks = np.concatenate(
-            [p for k, p in picks_by_type(raw.info, meg_combined=True)
-             if k in [i['name'] for i in chan_types]])
-        picks = np.concatenate([picks, mne.pick_types(raw.info, meg=False,
-                                                      eeg=False, eog=True,
-                                                      stim=True)])
-
         # Get events identified in run_extract_events
         events = mne.read_events(
             op.join(this_path, events_fname_filt_tmp.format(r)))
@@ -83,19 +75,15 @@ for subject in subjects:
             sel = events_select_condition(events[:,2], ep['events'])
             events_sel = events[sel,:]
 
-            # Only keep parameters applicable to mne.Epochs()
+            # Only keep parameters applicable to mne.Epochs() XXX CLEAN UP JR!
             ep_epochs = {key:v for key, v in ep.items() if key in ['event_id',
                                                                'tmin', 'tmax',
                                                                'baseline',
                                                                'reject',
                                                                'decim']}
             # Epoch raw data
-            epochs = mne.Epochs(raw=raw, picks=picks, preload=True,
-                                events=events_sel, **ep_epochs)
-
-            epochs_letters = mne.Epochs(raw=raw, picks=picks, preload=True,
-                                events=events_sel, **ep_epochs)
-
+            epochs = mne.Epochs(raw=raw, preload=True, events=events_sel,
+                                **ep_epochs)
 
             # Redefine t0 if necessary
             if 'time_shift' in ep.keys():
@@ -142,8 +130,14 @@ for subject in subjects:
                                    'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,
                           (epochs.tmax - epochs.tmin) / 20)
-        fig = evoked.plot_topomap(times, ch_type='mag')
-        report.add_figs_to_section(fig, '%s (%s): topo' % (subject, name),
-                                   'Topo: ' + name)
+        for ch_type in chan_types:
+            ch_type = ch_type['name']
+            if ch_type in ['eeg', 'meg', 'mag']:
+                if ch_type == 'meg':
+                    ch_type = 'mag'
+            fig = evoked.plot_topomap(times, ch_type=ch_type)
+            report.add_figs_to_section(
+                fig, '%s (%s): topo %s' % (subject, name, ch_type),
+                                        'Topo: ' + name)
 
 report.save(open_browser=open_browser)
