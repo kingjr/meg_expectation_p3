@@ -181,21 +181,6 @@ def get_events(events):
         else:
             event['seen'] = None
 
-        # Interaction seen SOA
-        # TODO TEST THIS??
-        # XXX Should find to way to make interactions automatically
-        if event['seen']:
-            event['seen_X_soa'] = event['seen']+str(event['soa'])
-        else:
-            event['seen_X_soa'] = None
-
-        # if event['seen'] == True:
-        #     event['seen_X_soa'] = 'seen_' + str(event['soa'])
-        # elif event['seen'] == False:
-        #     event['seen_X_soa'] = 'unseen_' + str(event['soa'])
-        # else:
-        #     event['seen_X_soa'] = None
-
         # Block
         if ((trigger_stim % 2) == 1):
             #odd numbers
