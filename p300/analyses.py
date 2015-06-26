@@ -249,7 +249,7 @@ regress_block_soa = analysis('regress_block_soa', 'regress',
 contrast_list = list()
 for local in ['S', 'U']:
     contrast = analysis('seen_local_%s' % local, 'categorize',
-                        condition='seen', query='local_context==%s' % local)
+                        condition='seen', query='local_context=="%s"' % local)
     contrast_list.append(contrast)
 contrast_local_seen = analysis('contrast_local_seen', 'categorize',
                                condition=contrast_list)
@@ -282,3 +282,4 @@ contrast_local_seen = analysis('contrast_local_seen', 'categorize',
 #             contrast_target, contrast_motor]
 
 analyses = [contrast_pst, regress_pas_pst, contrast_local_seen]
+analyses = [contrast_local_seen]
