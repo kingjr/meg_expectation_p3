@@ -195,9 +195,9 @@ def get_events(events):
         # Local context
         if ii > 1:
             seen1 = events_data_frame[-1]['seen']
-            if seen1==True:
+            if seen1 == 'seen':
                 event['local_context'] = 'S'
-            elif seen1==False:
+            elif seen1 == 'unseen':
                 event['local_context'] = 'U'
             else:
                 event['local_context'] = None
@@ -206,13 +206,13 @@ def get_events(events):
 
         if ii > 2:
             seen2 = events_data_frame[-2]['seen']
-            if seen1==True and seen2==True:
+            if seen1 == 'seen' and seen2 == 'seen':
                 event['local_context2'] = 'SS'
-            elif seen1==True and seen2==False:
+            elif seen1 == 'seen' and seen2 == 'unseen':
                 event['local_context2'] = 'SU'
-            elif seen1==False and seen2==True:
+            elif seen1 == 'unseen' and seen2 == 'seen':
                 event['local_context2'] = 'US'
-            elif seen1==False and seen2==False:
+            elif seen1 == 'unseen' and seen2 == 'unseen':
                 event['local_context2'] = 'UU'
             else:
                 event['local_context2'] = None
