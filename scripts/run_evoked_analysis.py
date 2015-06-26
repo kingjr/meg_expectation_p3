@@ -28,13 +28,6 @@ report, run_id, results_dir, logger = setup_provenance(script=__file__,
 
 mne.set_log_level('INFO')
 
-# force separation of magnetometers and gradiometers
-if 'meg' in [i['name'] for i in chan_types]:
-    chan_types = [dict(name='mag'), dict(name='grad')] + \
-                 [dict(name=i['name'])
-                  for i in chan_types
-                  if i['name'] != 'meg']
-
 for subject in subjects:
     print(subject)
     # Extract events from mat file
