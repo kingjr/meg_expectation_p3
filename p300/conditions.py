@@ -136,7 +136,7 @@ def get_events(events):
             event['motor1'] = np.nan
 
         # Accuracy
-        if ~np.isnan(event['motor1']):
+        if event['motor1'] not in [np.nan]:
             event['missed_m1'] = False
             if event['target'] == 'letter':
                 event['correct'] = event['letter_resp'] == event['motor1']
