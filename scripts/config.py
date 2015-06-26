@@ -121,8 +121,8 @@ from p300.analyses import analyses
 
 # DECODING ####################################################################
 # preprocessing for memory
-decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
-decoding_preproc_M1 = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
+decoding_preproc_S = dict(decim=8, crop=dict(tmin=0., tmax=0.700))
+decoding_preproc_M1 = dict(decim=8, crop=dict(tmin=-0.600, tmax=0.100))
 # XXX JRK: Could add second motor response preproc here
 decoding_preproc = [decoding_preproc_S, decoding_preproc_M1]
 
@@ -136,6 +136,8 @@ clf = Pipeline([('scaler', scaler), ('svc', svc)])
 
 decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
 
+# FIXME!!!
+preproc = decoding_preproc_S
 
 # STATS #######################################################################
 clu_sigma = 1e3

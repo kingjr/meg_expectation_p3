@@ -282,4 +282,4 @@ contrast_local_seen = analysis('contrast_local_seen', 'categorize',
 #             contrast_target, contrast_motor]
 
 analyses = [contrast_pst, regress_pas_pst, contrast_local_seen]
-analyses = [contrast_local_seen]
+# analyses = [contrast_local_seen]
