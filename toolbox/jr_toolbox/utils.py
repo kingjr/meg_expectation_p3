@@ -52,7 +52,10 @@ def nested_analysis(X, df, condition, function=None, query=None,
         y_mean = np.zeros(len(y_sel))
         for ii, sel_ in enumerate(y_sel):
             X_mean[ii, ...] = np.mean(X[sel_, ...], axis=0)
-            y_mean[ii] = y[sel_[0]]
+            if isinstance(y[sel_[0]], str):
+                y_mean[ii] = ii
+            else:
+                y_mean[ii] = y[sel_[0]]
         if single_trial:
             X = X.take(np.hstack(y_sel), axis=0)  # ERROR COME FROM HERE
             y = y.take(np.hstack(y_sel), axis=0)
@@ -70,11 +73,11 @@ def nested_analysis(X, df, condition, function=None, query=None,
         sub_list = list()
         X_list = list()  # FIXME use numpy array
         for subcondition in condition:
-            X, sub = nested_analysis(
+            scores, sub = nested_analysis(
                 X, df, subcondition['condition'], n_jobs=n_jobs,
                 function=subcondition.get('function', None),
                 query=subcondition.get('query', None))
-            X_list.append(X)
+            X_list.append(scores)
             sub_list.append(sub)
         X = np.array(X_list)
         if y is None:
