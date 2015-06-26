@@ -5,7 +5,7 @@ import os.path as op
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
-data_path = '/Volumes/INSERM/data'
+# data_path = '/Volumes/INSERM/data'
 
 
 pass_errors = False
@@ -121,8 +121,8 @@ from p300.analyses import analyses
 
 # DECODING ####################################################################
 # preprocessing for memory
-decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
-decoding_preproc_M1 = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
+decoding_preproc_S = dict(decim=8, crop=dict(tmin=0., tmax=0.700))
+decoding_preproc_M1 = dict(decim=8, crop=dict(tmin=-0.600, tmax=0.100))
 # XXX JRK: Could add second motor response preproc here
 decoding_preproc = [decoding_preproc_S, decoding_preproc_M1]
 
@@ -136,6 +136,8 @@ clf = Pipeline([('scaler', scaler), ('svc', svc)])
 
 decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
 
+# FIXME!!!
+preproc = decoding_preproc_S
 
 # STATS #######################################################################
 clu_sigma = 1e3
@@ -146,5 +148,5 @@ clu_threshold = 0.05
 # TO RUN TESTS ################################################################
 use_ica = False  # XXX deal with bad chan first
 # runs = [1]
-subjects = ['s23_pf120155']
+subjects = [subjects[0]]
 epochs_params = [epochs_params[0]]

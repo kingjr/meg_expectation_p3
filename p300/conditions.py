@@ -67,8 +67,8 @@ def get_events(events):
         if trigger_stim in [i * 12 + j for i in range(5) for j in range(1,5)]:
             # 1-4 13-16 25-28 37-40 49-52
             event['present'] = False
-            event['target'] = None
-            event['soa'] = None
+            event['target'] = np.nan
+            event['soa'] = np.nan
             if trigger_stim in range(1, 5):
                 event['soa_ttl'] = 17
             elif trigger_stim in range(13, 17):
@@ -81,7 +81,7 @@ def get_events(events):
                 event['soa_ttl'] = 83
             else:
                 raise RuntimeError('did not find adequate ttl')
-                event['soa_ttl'] = None
+                event['soa_ttl'] = np.nan
         else:
             event['present'] = True
 
@@ -94,7 +94,7 @@ def get_events(events):
                 event['target'] = 'number'
             else:
                 raise RuntimeError('did not find adequate ttl')
-                event['target'] = None
+                event['target'] = np.nan
 
             # SOA for target-present trials
             if trigger_stim in range (5,13):
@@ -114,7 +114,7 @@ def get_events(events):
                 event['soa'] = 83
             else:
                 raise RuntimeError('did not find adequate ttl')
-                event['soa'] = None
+                event['soa'] = np.nan
 
             event['soa_ttl'] = event['soa']
 
@@ -125,7 +125,7 @@ def get_events(events):
         elif (np.binary_repr(trigger_stim,width=2)[-2]==np.binary_repr(trigger_stim,width=2)[-1]):
             event['letter_resp'] = 'right'
         else:
-            event['letter_resp'] = None
+            event['letter_resp'] = np.nan
 
         # motor response
         if trigger_motor1 == (2 ** 13):
@@ -133,10 +133,10 @@ def get_events(events):
         elif trigger_motor1 == (2 ** 14):
             event['motor1'] = 'left'
         else:
-            event['motor1'] = None
+            event['motor1'] = np.nan
 
         # Accuracy
-        if event['motor1'] is not None:
+        if event['motor1'] not in [np.nan]:
             event['missed_m1'] = False
             if event['target'] == 'letter':
                 event['correct'] = event['letter_resp'] == event['motor1']
@@ -144,7 +144,7 @@ def get_events(events):
                 event['correct'] = event['letter_resp'] != event['motor1']
         else:
             event['missed_m1'] = True
-            event['correct'] = None # we want to differentiate between incorrect and no answer
+            event['correct'] = np.nan # we want to differentiate between incorrect and no answer
 
         # PAS
         event['missed_m2'] = False
@@ -162,7 +162,7 @@ def get_events(events):
             event['pas'] = 3
         else:
             event['missed_m2'] = True
-            event['pas'] = None
+            event['pas'] = np.nan
 
         # XXX Define this only when you'll analyze it
         # # Seen/Unseen (0,1 vs. 2,3)
@@ -171,7 +171,7 @@ def get_events(events):
         # elif event['pas'] > 1:
         #     event['seen'] = 'unseen'
         # else:
-        #     event['seen'] = None
+        #     event['seen'] = np.nan
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
@@ -179,7 +179,7 @@ def get_events(events):
         elif event['pas'] > 0:
             event['seen'] = 'seen'
         else:
-            event['seen'] = None
+            event['seen'] = np.nan
 
         # Block
         if ((trigger_stim % 2) == 1):
@@ -190,34 +190,34 @@ def get_events(events):
             event['block'] = 'visible'
         else:
             raise RuntimeError('did not find adequate ttl')
-            event['block'] = None
+            event['block'] = np.nan
 
         # Local context
         if ii > 1:
             seen1 = events_data_frame[-1]['seen']
-            if seen1==True:
+            if seen1 == 'seen':
                 event['local_context'] = 'S'
-            elif seen1==False:
+            elif seen1 == 'unseen':
                 event['local_context'] = 'U'
             else:
-                event['local_context'] = None
+                event['local_context'] = np.nan
         else:
-            event['local_context'] = None
+            event['local_context'] = np.nan
 
         if ii > 2:
             seen2 = events_data_frame[-2]['seen']
-            if seen1==True and seen2==True:
+            if seen1 == 'seen' and seen2 == 'seen':
                 event['local_context2'] = 'SS'
-            elif seen1==True and seen2==False:
+            elif seen1 == 'seen' and seen2 == 'unseen':
                 event['local_context2'] = 'SU'
-            elif seen1==False and seen2==True:
+            elif seen1 == 'unseen' and seen2 == 'seen':
                 event['local_context2'] = 'US'
-            elif seen1==False and seen2==False:
+            elif seen1 == 'unseen' and seen2 == 'unseen':
                 event['local_context2'] = 'UU'
             else:
-                event['local_context2'] = None
+                event['local_context2'] = np.nan
         else:
-            event['local_context2'] = None
+            event['local_context2'] = np.nan
 
 
         events_data_frame.append(event)

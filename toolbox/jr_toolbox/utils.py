@@ -5,99 +5,383 @@ import matplotlib.pyplot as plt
 import warnings
 
 
-def build_analysis(evoked_list, epochs, events, operator=None):
-    """Builds a n-deep analysis where n represents different levels of analyses
+def nested_analysis(X, df, condition, function=None, query=None,
+                    single_trial=False, y=None, n_jobs=-1):
+    """ Apply a nested set of analyses.
     Parameters
     ----------
-    evoked_list : dict
-    epochs
-    events
-    operator
+    X : np.array, shape(n_samples, ...)
+        Data array.
+    df : pandas.DataFrame
+        Condition DataFrame
+    condition : str | list
+        If string, get the samples for each unique value of df[condition]
+        If list, nested call nested_analysis.
+    query : str | None, optional
+        To select a subset of trial using pandas.DataFrame.query()
+    function : function
+        Computes across list of evoked. Must be of the form:
+        function(X[:], y[:])
+    y : np.array, shape(n_conditions)
+    n_jobs : int
+        Number of core to compute the function. Defaults to -1.
 
     Returns
     -------
-    ceof : evoked
-        contrast
-    evokeds : list
-        list of average evoked conditions
-    e.g. XXX Make example
+    scores : np.array, shape(...)
+        The results of the function
+    sub : dict()
+        Contains results of sub levels.
     """
-
-    evokeds = dict()
-    evokeds['evokeds'] = list()  # list of all evoked from lower level
-    evokeds['coef'] = list()  # evoked of analysis
-
-    # Accept passing lists only
-    if type(evoked_list) is list:
-        evoked_list_ = evoked_list
-        evoked_list = dict(conditions=evoked_list_)
-
-    # Gather coef at each sublevel
-    for evoked in evoked_list['conditions']:
-        if 'include' in evoked.keys():
-            # Default exclude condition
-            if 'exclude' not in evoked.keys():
-                evoked['exclude'] = dict()
-            # Find corresponding samples
-            sel = find_in_df(events, evoked['include'], evoked['exclude'])
-            # if no sample in conditions, throw error: XXX JRK: need fix
-            if not len(sel):
-                raise RuntimeError('no epoch in %s' % evoked['name'])
-            # Average
-            avg = epochs[sel].average()
-            # Keep info
-            avg.comment = evoked['name']
-            evokeds['coef'].append(avg)
+    import numpy as np
+    print condition
+    if isinstance(condition, str):
+        # Subselect data using pandas.DataFrame queries
+        sel = range(len(X)) if query is None else df.query(query).index
+        X = X.take(sel, axis=0)
+        y = np.array(df[condition][sel])
+        # Find unique conditions
+        values = list()
+        for ii in np.unique(y):
+            if (ii is not None) and (ii not in [np.nan]):
+                values.append(ii)
+        # Subsubselect for each unique condition
+        y_sel = [np.where(y == value)[0] for value in values]
+        # Mean condition:
+        X_mean = np.zeros(np.hstack((len(y_sel), X.shape[1:])))
+        y_mean = np.zeros(len(y_sel))
+        for ii, sel_ in enumerate(y_sel):
+            X_mean[ii, ...] = np.mean(X[sel_, ...], axis=0)
+            if isinstance(y[sel_[0]], str):
+                y_mean[ii] = ii
+            else:
+                y_mean[ii] = y[sel_[0]]
+        if single_trial:
+            X = X.take(np.hstack(y_sel), axis=0)  # ERROR COME FROM HERE
+            y = y.take(np.hstack(y_sel), axis=0)
         else:
-            if 'operator' not in evoked_list.keys():
-                evoked_list['operator'] = None
-            coef_, evokeds_ = build_analysis(evoked, epochs, events,
-                                             evoked_list['operator'])
-            evokeds['evokeds'].append(evokeds_)
-            evokeds['coef'].append(coef_)
+            X = X_mean
+            y = y_mean
+        # Store values to keep track
+        sub_list = dict(X=X_mean, y=y_mean, sel=sel, query=query,
+                        condition=condition, values=values,
+                        single_trial=single_trial)
+    elif isinstance(condition, list):
+        print 'list'
+        # If condition is a list, we must recall the function to gather
+        # the results of the lower levels
+        sub_list = list()
+        X_list = list()  # FIXME use numpy array
+        for subcondition in condition:
+            scores, sub = nested_analysis(
+                X, df, subcondition['condition'], n_jobs=n_jobs,
+                function=subcondition.get('function', None),
+                query=subcondition.get('query', None))
+            X_list.append(scores)
+            sub_list.append(sub)
+        X = np.array(X_list)
+        if y is None:
+            y = np.arange(len(condition))
+        if len(y) != len(X):
+            raise ValueError('X and y must be of identical shape: ' +
+                             '%s <> %s') % (len(X), len(y))
+        sub_list = dict(X=X, y=y, sub=sub_list, condition=condition)
+
+    # Default function
+    function = _default_analysis if function is None else function
+
+    scores = pairwise(X, y, function, n_jobs=n_jobs)
+    return scores, sub_list
+
+
+def _default_analysis(X, y):
+    # Binary contrast
+    unique_y = np.unique(y)
+    if len(unique_y) == 2:
+        y = np.where(y == unique_y[0], 1, -1)
+        # Tile Y to across X dimension without allocating memory
+        Y = tile_memory_free(y, X.shape[1:])
+        return np.mean(X * Y, axis=0)
+
+    # Linear regression:
+    elif len(unique_y) > 2:
+        return repeated_spearman(X, y)
     else:
-        # Set default operation
-        if operator is None:
-            if len(evokeds['coef']) == 2:
-                operator = evoked_subtract
-            elif len(evokeds['coef']) > 2:
-                operator = evoked_spearman
-
-        coef = operator(evokeds)
-
-    return coef, evokeds
+        raise RuntimeError('Please specify a function for this kind of data')
 
 
-def evoked_subtract(evokeds):
-    evokeds['coef'][0].nave = 1
-    evokeds['coef'][-1].nave = 1
-    coef = evoked_weighted_subtract(evokeds)
-    return coef
+def tile_memory_free(y, shape):
+    """
+    Tile vector along multiple dimension without allocating new memory.
+
+    Parameters
+    ----------
+     y : np.array, shape (n,)
+        data
+    shape : np.array, shape (m),
+    Returns
+    -------
+    Y : np.array, shape (n, *shape)
+    """
+    y = np.lib.stride_tricks.as_strided(y,
+                                        (np.prod(shape), y.size),
+                                        (0, y.itemsize)).T
+    return y.reshape(np.hstack((len(y), shape)))
 
 
-def evoked_weighted_subtract(evokeds):
-    if len(evokeds['coef']) > 2:
-        warnings.warn('More than 2 categories. Subtract last from last'
-                      'category!')
-    coef = evokeds['coef'][0] - evokeds['coef'][-1]
-    return coef
+def test_tile_memory_free():
+    from nose.tools import assert_equal
+    y = np.arange(100)
+    Y = tile_memory_free(y, 33)
+    assert_equal(y.shape[0], Y.shape[0])
+    np.testing.assert_array_equal(y, Y[:, 0], Y[:, -1])
 
 
-def evoked_spearman(evokeds):
+def pairwise(X, y, func, n_jobs=-1):
+    """Applies pairwise operations on two matrices using multicore:
+    function(X[:, jj, kk, ...], y[:, jj, kk, ...])
+
+    Parameters
+    ----------
+        X : np.ndarray, shape(n, ...)
+        y : np.array, shape(n, ...) | shape(n,)
+            If shape == X.shape:
+                parallel(X[:, chunk], y[:, chunk ] for chunk in n_chunks)
+            If shape == X.shape[0]:
+                parallel(X[:, chunk], y for chunk in n_chunks)
+        func : function
+        n_jobs : int, optional
+            Number of parallel cpu.
+    Returns
+    -------
+        out : np.array, shape(func(X, y))
+    """
+    import numpy as np
+    from mne.parallel import parallel_func
+    dims = X.shape
+    if y.shape[0] != dims[0]:
+        raise ValueError('X and y must have identical shapes')
+
+    X.resize([dims[0], np.prod(dims[1:])])
+    if y.ndim > 1:
+        Y = np.reshape(y, [dims[0], np.prod(dims[1:])])
+
+    parallel, pfunc, n_jobs = parallel_func(func, n_jobs)
+
+    n_cols = X.shape[1]
+    n_chunks = min(n_cols, n_jobs)
+    chunks = np.array_split(range(n_cols), n_chunks)
+    if y.ndim == 1:
+        out = parallel(pfunc(X[:, chunk], y) for chunk in chunks)
+    else:
+        out = parallel(pfunc(X[:, chunk], Y[:, chunk]) for chunk in chunks)
+
+    # size back in case higher dependencies
+    X.resize(dims)
+
+    # unpack
+    if isinstance(out[0], tuple):
+        return [np.reshape(out_, dims[1:]) for out_ in zip(*out)]
+    else:
+        return np.reshape(out, dims[1:])
+
+
+def _dummy_function_1(x, y):
+    return x[0, :]
+
+
+def _dummy_function_2(x, y):
+    return x[0, :], 0. * x[0, :]
+
+
+def test_pairwise():
+    from nose.tools import assert_equal, assert_raises
+    n_obs = 20
+    n_dims1 = 5
+    n_dims2 = 10
+    y = np.linspace(0, 1, n_obs)
+    X = np.zeros((n_obs, n_dims1, n_dims2))
+    for dim1 in range(n_dims1):
+        for dim2 in range(n_dims2):
+            X[:, dim1, dim2] = dim1 + 10*dim2
+
+    # test size
+    score = pairwise(X, y, _dummy_function_1, n_jobs=2)
+    assert_equal(score.shape, X.shape[1:])
+    np.testing.assert_array_equal(score[:, 0], np.arange(n_dims1))
+    np.testing.assert_array_equal(score[0, :], 10 * np.arange(n_dims2))
+
+    # Test that X has not changed becaus of resize
+    np.testing.assert_array_equal(X.shape, [n_obs, n_dims1, n_dims2])
+
+    # test multiple out
+    score1, score2 = pairwise(X, y, _dummy_function_2, n_jobs=2)
+    np.testing.assert_array_equal(score1[:, 0], np.arange(n_dims1))
+    np.testing.assert_array_equal(score2[:, 0], 0 * np.arange(n_dims1))
+
+    # Test array vs vector
+    score1, score2 = pairwise(X, X, _dummy_function_2, n_jobs=1)
+
+    # test error check
+    assert_raises(ValueError, pairwise, X, y[1:], _dummy_function_1)
+    assert_raises(ValueError, pairwise, y, X, _dummy_function_1)
+
+
+def share_clim(axes, clim=None):
+    """Share clim across multiple axes
+    Parameters
+    ----------
+    axes : plt.axes
+    clim : np.array | list, shape(2,), optional
+        Defaults is min and max across axes.clim.
+    """
+    # Find min max of clims
+    if clim is None:
+        clim = list()
+        for ax in axes:
+            for im in ax.get_images():
+                clim += np.array(im.get_clim()).flatten().tolist()
+        clim = [np.min(clim), np.max(clim)]
+    # apply common clim
+    for ax in axes:
+        for im in ax.get_images():
+            im.set_clim(clim)
+    plt.draw()
+
+
+def meg_to_gradmag(chan_types):
+    """force separation of magnetometers and gradiometers"""
+    from mne.channels import read_ch_connectivity
+    if 'meg' in [chan['name'] for chan in chan_types]:
+        mag_connectivity, _ = read_ch_connectivity('neuromag306mag')
+        # FIXME grad connectivity? Need virtual sensor?
+        # grad_connectivity, _ = read_ch_connectivity('neuromag306grad')
+        chan_types = [dict(name='mag', connectivity=mag_connectivity),
+                      dict(name='grad', connectivity='missing')] + \
+                     [chan for chan in chan_types if chan['name'] != 'meg']
+    return chan_types
+
+
+def scorer_auc(y_true, y_pred):
+    from sklearn.metrics import roc_auc_score
+    from sklearn.preprocessing import LabelBinarizer
+    """Dedicated to 2class probabilistic outputs"""
+    le = LabelBinarizer()
+    y_true = le.fit_transform(y_true)
+    return roc_auc_score(y_true, y_pred)
+
+
+def scorer_spearman(y_true, y_pred):
+    """"Dedicated to standard SVR"""
     from scipy.stats import spearmanr
-    n_chan, n_time = evokeds['coef'][0].data.shape
-    coef = np.zeros((n_chan, n_time))
-    # TODO: need parallelization
-    for chan in range(n_chan):
-        for t in range(n_time):
-            y = range(len(evokeds['coef']))
-            X = list()
-            for i in y:
-                X.append(evokeds['coef'][i].data[chan, t])
-            coef[chan, t], _ = spearmanr(X, y)
-    evoked = evokeds['coef'][0]
-    evoked.data = coef
-    return evoked
+    rho, p = spearmanr(y_true, y_pred[:, 0])
+    return rho
+
+
+def repeated_spearman(X, y, dtype=None):
+    """Computes spearman correlations between a vector and a matrix.
+
+    Parameters
+    ----------
+        X : np.array, shape (n_samples, n_measures)
+            Data matrix onto which the vector is correlated.
+        y : np.array, shape (n_samples)
+            Data vector.
+        dtype : type, optional
+            Data type used to compute correlation values to optimize memory.
+
+    Returns
+    -------
+        rho : np.array, shape (n_measures)
+    """
+    if X.ndim not in [1, 2] or y.ndim != 1 or X.shape[0] != y.shape[0]:
+        raise ValueError('y must be a vector, and X a matrix with an equal'
+                         'number of rows.')
+    if X.ndim == 1:
+        X = X[:, None]
+
+    # Rank
+    X = np.argsort(X, axis=0)
+    y = np.argsort(y, axis=0)
+    # Double rank to ensure that normalization step of compute_corr
+    # (X -= mean(X)) remains an integer.
+    if (dtype is None and X.shape[0] < 2 ** 8) or\
+       (dtype in [int, np.int16, np.int32, np.int64]):
+        X *= 2
+        y *= 2
+        dtype = np.int16
+    else:
+        dtype = type(y[0])
+    X = np.array(X, dtype=dtype)
+    y = np.array(y, dtype=dtype)
+    return repeated_corr(X, y, dtype=type(y[0]))
+
+
+def repeated_corr(X, y, dtype=float):
+    """Computes pearson correlations between a vector and a matrix.
+
+    Adapted from Jona-Sassenhagen's PR #L1772 on mne-python.
+
+    Parameters
+    ----------
+        y : np.array, shape (n_samples)
+            Data vector.
+        X : np.array, shape (n_samples, n_measures)
+            Data matrix onto which the vector is correlated.
+        dtype : type, optional
+            Data type used to compute correlation values to optimize memory.
+
+    Returns
+    -------
+        rho : np.array, shape (n_measures)
+    """
+    from sklearn.utils.extmath import fast_dot
+    if X.ndim not in [1, 2] or y.ndim != 1 or X.shape[0] != y.shape[0]:
+        raise ValueError('y must be a vector, and X a matrix with an equal'
+                         'number of rows.')
+    if X.ndim == 1:
+        X = X[:, None]
+    y -= np.array(y.mean(0), dtype=dtype)
+    X -= np.array(X.mean(0), dtype=dtype)
+    y_sd = y.std(0, ddof=1)
+    X_sd = X.std(0, ddof=1)[:, None if y.shape == X.shape else Ellipsis]
+    return (fast_dot(y.T, X) / float(len(y) - 1)) / (y_sd * X_sd)
+
+
+def test_corr_functions():
+    from scipy.stats import spearmanr
+    test_corr(np.corrcoef, repeated_corr, 1)
+    test_corr(spearmanr, repeated_spearman, 0)
+
+
+def test_corr(old_func, new_func, sel_item):
+    from nose.tools import assert_equal, assert_raises
+    n_obs = 20
+    n_dims = 10
+    y = np.linspace(0, 1, n_obs)
+    X = np.tile(y, [n_dims, 1]).T + np.random.randn(n_obs, n_dims)
+    rho_fast = new_func(X, y)
+    # test dimensionality
+    assert_equal(rho_fast.ndim, 1)
+    assert_equal(rho_fast.shape[0], n_dims)
+    # test data
+    rho_slow = np.ones(n_dims)
+    for dim in range(n_dims):
+        rho_slow[dim] = np.array(old_func(X[:, dim], y)).item(sel_item)
+    np.testing.assert_array_equal(rho_fast.shape, rho_slow.shape)
+    np.testing.assert_array_almost_equal(rho_fast, rho_slow)
+    # test errors
+    new_func(np.squeeze(X[:, 0]), y)
+    assert_raises(ValueError, new_func, y, X)
+    assert_raises(ValueError, new_func, X, y[1:])
+    # test dtype
+    X = np.argsort(X, axis=0) * 2  # ensure no bug at normalization
+    y = np.argsort(y, axis=0) * 2
+    rho_fast = new_func(X, y, dtype=int)
+    rho_slow = np.ones(n_dims)
+    for dim in range(n_dims):
+        rho_slow[dim] = np.array(old_func(X[:, dim], y)).item(sel_item)
+    np.testing.assert_array_almost_equal(rho_fast, rho_slow)
 
 
 def save_to_dict(fname, data, overwrite=False):
@@ -253,21 +537,22 @@ def resample_epochs(epochs, sfreq):
                               dtype=np.float) / sfreq + epochs.times[0])
     return epochs
 
+
 def decim(inst, decim):
     """faster resampling"""
     from mne.io.base import _BaseRaw
     from mne.epochs import _BaseEpochs
     if isinstance(inst, _BaseRaw):
-         inst._data =  inst._data[:,::decim]
-         inst.info['sfreq'] /= decim
-         inst._first_samps /= decim
-         inst.first_samp /= decim
-         inst._last_samps /= decim
-         inst.last_samp /= decim
-         inst._raw_lengths /= decim
-         inst._times =  inst._times[::decim]
+        inst._data = inst._data[:, ::decim]
+        inst.info['sfreq'] /= decim
+        inst._first_samps /= decim
+        inst.first_samp /= decim
+        inst._last_samps /= decim
+        inst.last_samp /= decim
+        inst._raw_lengths /= decim
+        inst._times = inst._times[::decim]
     elif isinstance(inst, _BaseEpochs):
-        inst._data = inst._data[:,:,::decim]
+        inst._data = inst._data[:, :, ::decim]
         inst.info['sfreq'] /= decim
         inst.times = inst.times[::decim]
     return inst
@@ -508,47 +793,3 @@ class cluster_stat(dict):
             plt.show()
 
         return fig
-
-
-def find_in_df(df, include, exclude=dict(), max_n=np.inf):
-    """Find instance in pd.dataFrame that correspond to include and exlcuding
-    criteria.
-
-    Parameters
-    ----------
-    df : pd.dataFrame
-    includes : list | dict()
-    excludes : list | dict()
-    Returns
-    -------
-    inds : np.array"""
-    import random
-
-    # Find included trials
-    include_inds = _find_in_df(df, include)
-    # Find excluded trials
-    exclude_inds = _find_in_df(df, exclude)
-
-    # Select condition
-    inds = [i for i in include_inds if i not in exclude_inds]
-
-    # reduce number or trials if too many
-    if len(inds) > max_n:
-        random.shuffle(inds)
-        inds = inds[:max_n]
-
-    return inds
-
-
-def _find_in_df(df, le_dict):
-    """Find all instances in pd dataframe that match one of the specified
-    conditions"""
-    inds = []
-    for key in le_dict.keys():
-        if type(le_dict[key]) not in (list, np.ndarray):
-            le_dict[key] = [le_dict[key]]
-        for value in le_dict[key]:
-            for i in np.where(df[key] == value)[0]:
-                inds.append(i)
-    inds = np.unique(inds)
-    return inds
