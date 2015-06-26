@@ -41,7 +41,10 @@ def nested_analysis(X, df, condition, function=None, query=None,
         X = X.take(sel, axis=0)
         y = np.array(df[condition][sel])
         # Find unique conditions
-        values = [ii for ii in np.unique(y) if ~np.isnan(ii)]
+        values = list()
+        for ii in np.unique(y):
+            if (ii is not None) and (ii not in [np.nan]):
+                values.append(ii)
         # Subsubselect for each unique condition
         y_sel = [np.where(y == value)[0] for value in values]
         # Mean condition:
