@@ -184,16 +184,16 @@ def get_events(events):
             event['seen'] = np.nan
 
         # Seen/Unseen (0 vs. 1,2,3) together with absent trials
-        if event['present'] == False
-            event('abs_seen') = 'absent'
-        else
-            event('abs_seen') = event('seen')
+        if event['present'] == False:
+            event['abs_seen'] = 'absent'
+        else:
+            event['abs_seen'] = event('seen')
 
         # SOA together with absent trials
-        if event['present'] == False
-            event('abs_soa') = 'absent'
-        else
-            event('abs_soa') = event('soa')
+        if event['present'] == False:
+            event['abs_soa'] = 'absent'
+        else:
+            event['abs_soa'] = event('soa')
 
         # Block
         if ((trigger_stim % 2) == 1):
