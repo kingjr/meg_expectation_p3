@@ -150,3 +150,4 @@ use_ica = False  # XXX deal with bad chan first
 # runs = [1]
 subjects = [subjects[0]]
 epochs_params = [epochs_params[0]]
+data_path = '/Users/Gabriela/Documents/2015-2016/P3/python/meg_expectation_p3/data'
