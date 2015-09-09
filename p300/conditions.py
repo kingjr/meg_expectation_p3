@@ -187,13 +187,13 @@ def get_events(events):
         if event['present'] == False:
             event['abs_seen'] = 'absent'
         else:
-            event['abs_seen'] = event('seen')
+            event['abs_seen'] = event['seen']
 
         # SOA together with absent trials
         if event['present'] == False:
             event['abs_soa'] = 'absent'
         else:
-            event['abs_soa'] = event('soa')
+            event['abs_soa'] = event['soa']
 
         # Block
         if ((trigger_stim % 2) == 1):
