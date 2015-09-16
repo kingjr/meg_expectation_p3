@@ -5,7 +5,6 @@ import numpy as np
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 
-from toolbox.jr_toolbox.utils import find_in_df
 from toolbox.jr_toolbox.utils import Evokeds_to_Epochs as avg2epo
 
 from meeg_preprocessing.utils import setup_provenance
@@ -55,10 +54,12 @@ for subject in subjects:
     soas = [17, 33, 50, 67, 83]
     for s, soa in enumerate(soas):
         # find absent trials
-        sel = find_in_df(events, dict(soa_ttl=soa), exclude=dict(present=True))
+        sel = np.where((np.array(events.soa_ttl) == soa) &
+                       (np.array(events.present) == False))[0]
         evoked_abs = epochs[sel].average(picks=range(len(epochs.ch_names)))
         # find present trials
-        sel = find_in_df(events, dict(soa=soa), exclude=dict(present=False))
+        sel = np.where((np.array(events.soa_ttl) == soa) &
+                       (np.array(events.present)))[0]
         evoked_pst = epochs[sel].average(picks=range(len(epochs.ch_names)))
         # XXX MNE uses trial number as a weight in subtractions
         evoked_abs.nave = 1

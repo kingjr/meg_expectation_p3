@@ -5,7 +5,6 @@ import numpy as np
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 
-from toolbox.jr_toolbox.utils import find_in_df
 from toolbox.jr_toolbox.utils import Evokeds_to_Epochs as avg2epo
 
 from meeg_preprocessing.utils import setup_provenance
@@ -24,7 +23,7 @@ from scripts.config import (
 
 
 report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+     script=__file__, results_dir=results_dir)
 
 
 # force separation of magnetometers and gradiometers
@@ -55,7 +54,7 @@ for subject in subjects:
     # loop across soas
     soas = [17, 33, 50, 67, 83]
     for soa in soas:
-        sel = find_in_df(events, dict(soa_ttl=soa))
+        sel = np.where(np.array(events.soa) == soa)[0]
         for trial in sel:
             toi = np.arange(soa * sfreq / 1000,
                             n_time - ((83 - soa) * sfreq / 1000)).astype(int)
