@@ -11,35 +11,20 @@ from scripts.config import (data_path, epochs_params, subjects, epochs_types,
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
-# data_path = sample.data_path()
-# fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
-# evoked = mne.read_evokeds(fname, condition='Left Auditory',
-#                           baseline=(None, 0))
-#
-# # plot with bads
-# evoked.plot(exclude=[])
-# # compute interpolation (also works with Raw and Epochs objects)
-# evoked.interpolate_bads(reset_bads=False)
-# # plot interpolated (previous bads)
-# evoked.plot(exclude=[])
+# epoch_params = epochs_params[0]
+# epoch_type = epochs_types[0
+#for subject in subjects:
 
-epoch_params = epochs_params[0]
-epoch_type = epochs_types[0]
-
-for subject in subjects:
-
-#def artefact_rej(name,subject,epochs):
-
-    print(subject)
+def artefact_rej(eptyp_name,subject,epochs):
+    print('Artefact Rejection')
     # Extract events from mat file
-    bhv_fname = op.join(data_path, 'behavior',
-                        '{}_behaviorMEG.mat'.format(subject[-2:]))
-    eptyp_name = epoch_params['name'] + epoch_type
-    #eptyp_name=name
+    # bhv_fname = op.join(data_path, 'behavior',
+    #                     '{}_behaviorMEG.mat'.format(subject[-2:]))
+    #eptyp_name = epoch_params['name'] + epoch_type
     # Get MEG data
-    epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(eptyp_name, subject))
-    epochs = mne.read_epochs(epo_fname)
+    # epo_fname = op.join(data_path, 'MEG', subject,
+    #                     '{}-{}-epo.fif'.format(eptyp_name, subject))
+    # epochs = mne.read_epochs(epo_fname)
 
     epochs.crop(-.200, .600)
 
@@ -55,7 +40,7 @@ for subject in subjects:
     # Identify bad EEG channels
     # XXX Specific to Gabriela's data XXX I think this refers to EEG064, not this, right?
     epochs_eeg = epochs.pick_types(meg=False, eeg=True, copy=True)
-    evoked_bad = epochs_eeg.average() #to plot before
+    #evoked_bad = epochs_eeg.average() #to plot before
     data = epochs_eeg._data
     chan_deviation = np.median(np.std(data, axis=2), axis=0)
 
@@ -65,18 +50,20 @@ for subject in subjects:
         return np.median(np.abs(x - center), axis=axis)
 
     threshold = np.median(chan_deviation) + 10 * mad(chan_deviation)
-    ax.plot(chan_deviation)
-    ax.axhline(threshold, color='r')
-    report.add_figs_to_section(fig, ('%s (%s): Artifact thresholding' % (
-         subject, eptyp_name)))
+    # fig, ax = plt.subplots(1)
+    # ax.plot(chan_deviation)
+    # ax.axhline(threshold, color='r')
+    # report.add_figs_to_section(fig, ('%s (%s): Artifact thresholding' % (
+    #      subject, eptyp_name)))
     bad_channels = np.where(chan_deviation > threshold)[0]
     #plt.show()
 
     # Interpolate
-    epochs_eeg.info['bads'] += [epochs_eeg.ch_names[ch] for ch in bad_channels]
-    epochs_eeg.interpolate_bads(reset_bads=False) #eeg only to plot
-    evoked_eeg = epochs_eeg.average()
+    # epochs_eeg.info['bads'] += [epochs_eeg.ch_names[ch] for ch in bad_channels]
+    # epochs_eeg.interpolate_bads(reset_bads=False) #eeg only to plot
+    # evoked_eeg = epochs_eeg.average()
 
+    epochs.info['bads'] += [epochs_eeg.ch_names[ch] for ch in bad_channels]
     epochs.interpolate_bads(reset_bads=False)
 
     # check
@@ -89,42 +76,48 @@ for subject in subjects:
     # evoked_bad.plot_topomap(show=False)
     # evoked_good.plot_topomap()
 
-    fig1 = evoked_bad.plot_topomap(show=False)
-    report.add_figs_to_section(fig1, ('%s (%s): BEFORE artifact rejection' % (
-        subject, eptyp_name)))
-    fig2 = evoked_eeg.plot_topomap(show=False)
-    report.add_figs_to_section(fig2, ('%s (%s): AFTER artifact rejection' % (
-        subject, eptyp_name)))
-
-    report.save(open_browser=open_browser)
-
-    #return epochs
-
-    # # Identify bad trials
-    # # --- normalize all channel types
-    # ch_types = [dict(meg=False, eeg=True),
-    #             dict(meg='mag', eeg=False),
-    #             dict(meg='grad', eeg=False)]
-    # epochs_norm = epochs.copy()
-    # for ch_type in ch_types:
-    #     pick = mne.pick_types(epochs.info, **ch_type)
-    #     data = epochs_norm._data[:, pick, :]
-    #     ntrial, nchan, ntime = data.shape
-    #     mean = np.median(np.median(data, axis=1), axis=0)
-    #     std = mad(np.median(data, axis=1), axis=0)
-    #     data -= np.tile(mean, [ntrial, nchan, 1])
-    #     data /= np.tile(std, [ntrial, nchan, 1])
-    #     epochs_norm._data[:, pick, :] = data
+    # fig1 = evoked_bad.plot_topomap(show=False)
+    # report.add_figs_to_section(fig1, ('%s (%s): BEFORE artifact rejection' % (
+    #     subject, eptyp_name)))
+    # fig2 = evoked_eeg.plot_topomap(show=False)
+    # report.add_figs_to_section(fig2, ('%s (%s): AFTER artifact rejection' % (
+    #     subject, eptyp_name)))
     #
-    # # TODO eeg is downweighted
-    # pick = mne.pick_types(epochs.info, eeg=True, meg=True)
-    # data = epochs_norm._data
-    # trial_deviation = np.median(np.std(data, axis=2), axis=1)
-    # threshold = np.median(trial_deviation) + 10 * mad(trial_deviation)
-    # plt.plot(trial_deviation)
-    # plt.axhline(threshold, color='r')
-    # plt.show()
 
+
+
+    # Identify bad trials
+    # --- normalize all channel types
+    ch_types = [dict(meg=False, eeg=True),
+                dict(meg='mag', eeg=False),
+                dict(meg='grad', eeg=False)]
+    epochs_norm = epochs.copy()
+    for ch_type in ch_types:
+        pick = mne.pick_types(epochs.info, **ch_type)
+        data = epochs_norm._data[:, pick, :]
+        ntrial, nchan, ntime = data.shape
+        mean = np.median(np.median(data, axis=1), axis=0)
+        std = mad(np.median(data, axis=1), axis=0)
+        data -= np.tile(mean, [ntrial, nchan, 1])
+        data /= np.tile(std, [ntrial, nchan, 1])
+        epochs_norm._data[:, pick, :] = data
+
+    # TODO eeg is downweighted
+    pick = mne.pick_types(epochs.info, eeg=True, meg=True)
+    data = epochs_norm._data
+    trial_deviation = np.median(np.std(data, axis=2), axis=1)
+    threshold = np.median(trial_deviation) + 10 * mad(trial_deviation)
+    # fig3, ax = plt.subplots(1)
+    # ax.plot(trial_deviation)
+    # ax.axhline(threshold, color='r')
+    # report.add_figs_to_section(fig3, ('%s (%s): Trial Rejection' % (
+    #      subject, eptyp_name)))
+    good_trials = np.where(trial_deviation < threshold)[0]
+    epochs=epochs[good_trials]
+
+#report.save(open_browser=open_browser)
+
+    return epochs
 
     #
     # # TODO put this into a function and relaunch the mask
