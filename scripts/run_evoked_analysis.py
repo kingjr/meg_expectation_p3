@@ -8,6 +8,7 @@ import mne
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
+#from scripts.wip_artefacts import artifact_reject
 
 from toolbox.jr_toolbox.utils import (nested_analysis, meg_to_gradmag,
                                       share_clim)
@@ -36,7 +37,7 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
     bhv_fname = op.join(data_path, 'behavior',
                         '{}_behaviorMEG.mat'.format(subject[-2:]))
     eptyp_name = epoch_params['name'] + epoch_type
-    print(eptyp_name)
+    print(subject, eptyp_name)
 
     # Get MEG data
     epo_fname = op.join(data_path, 'MEG', subject,
@@ -91,7 +92,7 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
         for chan_type in range(len(meg_to_gradmag(chan_types))):
             share_clim(ax2[chan_type, :])
         print(analysis['name'])
-        report.add_figs_to_section(fig1, ('%s (%s) %s: CONDITIONS' % (
+        report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
             subject, eptyp_name, analysis['name'])), analysis['name'])
 
 report.save(open_browser=open_browser)
