@@ -71,7 +71,7 @@ contrast_seen_pst_mid = analysis('seen_pst_mid', 'categorize', condition='seen',
 regress_abs_seen = analysis('abs_seen', 'regress', condition='abs_seen')
 
 # 5 SOAs compared to absent
-regress_abs_seen = analysis('abs_soa', 'regress', condition='abs_soa')
+regress_abs_soa = analysis('abs_soa', 'regress', condition='abs_soa')
 
 # regress_pas_list = list()
 # for soa in soas:
@@ -155,4 +155,6 @@ contrast_target = analysis('target','categorize', condition = 'target')
 contrast_motor = analysis('motor','categorize', condition = 'letter_resp')
 
 
-analyses = [contrast_pst, regress_pas_pst, contrast_local_seen]
+# analyses = [contrast_pst, regress_pas_pst,regress_abs_seen,regress_abs_soa,
+#             regress_block_soa, contrast_block_seen,contrast_local_seen]
+analyses = [contrast_pst]
