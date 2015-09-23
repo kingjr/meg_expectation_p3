@@ -4,9 +4,9 @@ import numpy as np
 
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
+from mne.epochs import EpochsArray
 
-from toolbox.jr_toolbox.utils import Evokeds_to_Epochs as avg2epo
-
+from jr.stats import robust_mean
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
@@ -57,10 +57,17 @@ for subject in subjects:
         sel = np.where((np.array(events.soa_ttl) == soa) &
                        (np.array(events.present) == False))[0]
         evoked_abs = epochs[sel].average(picks=range(len(epochs.ch_names)))
+        # change classic averaging with robust averaging (hybrid median mean)
+        evoked_abs.data = robust_mean(epochs._data[sel, :, :], axis=0,
+                                      percentile=[10, 90])
+
         # find present trials
         sel = np.where((np.array(events.soa_ttl) == soa) &
                        (np.array(events.present)))[0]
         evoked_pst = epochs[sel].average(picks=range(len(epochs.ch_names)))
+        # change classic averaging with robust averaging (hybrid median mean)
+        evoked_pst.data = robust_mean(epochs._data[sel, :, :], axis=0,
+                                      percentile=[10, 90])
         # XXX MNE uses trial number as a weight in subtractions
         evoked_abs.nave = 1
         evoked_pst.nave = 1
@@ -78,13 +85,13 @@ for subject in subjects:
 
     # Create templates
     #--- force mne to take all channels instead of meg and eeg
-    picks = range(len(epochs.ch_names))
-
-    template_abs = avg2epo(evokeds_abs).average(picks=picks)
+    events = np.zeros((5, 3), int)
+    data = [evoked.data for evoked in evokeds_abs]
+    template_abs = EpochsArray(data, epochs.info, events).average()
     template_abs.comment = 'absent'
     template_abs.nave = 1 # XXX Stupid MNE
-
-    template_pst = avg2epo(evokeds_pst).average(picks=picks)
+    data = [evoked.data for evoked in evokeds_pst]
+    template_pst = EpochsArray(data, epochs.info, events).average()
     template_pst.comment = 'present'
     template_pst.nave = 1 # XXX Stupid MNE
 
@@ -113,6 +120,8 @@ for subject in subjects:
         for s, soa in enumerate(soas):
             imshow(axes[s, 0], evokeds_pst[s], picks, mM)
             imshow(axes[s, 1], evokeds_abs[s], picks, mM)
+            template_abs_ = template_abs.copy()
+            template_abs_.times = evokeds_pst[s].times
             imshow(axes[s, 2], evokeds_pst[s] - template_abs, picks, mM)
             # imshow(axes[s, 2], evokeds_pst[s] - evokeds_abs[s], picks, mM)
 

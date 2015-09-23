@@ -113,37 +113,37 @@ for subject in subjects:
         # Save
         epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
 
-        # # Plot
-        # #-- % dropped
-        # report.add_figs_to_section(
-        #     plot_drop_log(epochs.drop_log), '%s (%s): total dropped'
-        #                   % (subject, name), 'Drop: ' + name)
-        # #-- % trigger channel
-        # ch = mne.pick_channels(epochs.ch_names, 'STI101')
-        # epochs._data[:, ch,:] = (2.*(epochs._data[:,ch,:] > 1) +
-        #                          1.*(epochs._data[:,ch,:] < 8192))
-        #
+        # Plot
+        #-- % dropped
+        report.add_figs_to_section(
+            plot_drop_log(epochs.drop_log), '%s (%s): total dropped'
+                          % (subject, name), 'Drop: ' + name)
+        #-- % trigger channel
+        ch = mne.pick_channels(epochs.ch_names, ['STI101'])
+        epochs._data[:, ch,:] = (2.*(epochs._data[:,ch,:] > 1) +
+                                 1.*(epochs._data[:,ch,:] < 8192))
+
         # fig = mne.viz.plot_image_epochs(epochs, ch, scalings=dict(stim=1),
         #                                 units=dict(stim=''), vmin=1, vmax=3,
         #                                 show=False)
         # report.add_figs_to_section(fig, '%s (%s): triggers' % (subject, name),
         #                            'Triggers: ' + name)
-        #
-        # #-- % evoked
-        # evoked = epochs.average()
-        # fig = evoked.plot(show=False)
-        # report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
-        #                            'Butterfly: ' + name)
-        # times = np.arange(epochs.tmin, epochs.tmax,
-        #                   (epochs.tmax - epochs.tmin) / 20)
-        # for ch_type in chan_types:
-        #     ch_type = ch_type['name']
-        #     if ch_type in ['eeg', 'meg', 'mag']:
-        #         if ch_type == 'meg':
-        #             ch_type = 'mag'
-        #     fig = evoked.plot_topomap(times, ch_type=ch_type)
-        #     report.add_figs_to_section(
-        #         fig, '%s (%s): topo %s' % (subject, name, ch_type),
-        #                                 'Topo: ' + name)
+
+        #-- % evoked
+        evoked = epochs.average()
+        fig = evoked.plot(show=False)
+        report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
+                                   'Butterfly: ' + name)
+        times = np.arange(epochs.tmin, epochs.tmax,
+                          (epochs.tmax - epochs.tmin) / 20)
+        for ch_type in chan_types:
+            ch_type = ch_type['name']
+            if ch_type in ['eeg', 'meg', 'mag']:
+                if ch_type == 'meg':
+                    ch_type = 'mag'
+            fig = evoked.plot_topomap(times, ch_type=ch_type)
+            report.add_figs_to_section(
+                fig, '%s (%s): topo %s' % (subject, name, ch_type),
+                                        'Topo: ' + name)
 
 report.save(open_browser=open_browser)

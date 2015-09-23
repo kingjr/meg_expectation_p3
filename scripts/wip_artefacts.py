@@ -25,21 +25,21 @@ def artefact_rej(eptyp_name,subject,epochs):
     # epo_fname = op.join(data_path, 'MEG', subject,
     #                     '{}-{}-epo.fif'.format(eptyp_name, subject))
     # epochs = mne.read_epochs(epo_fname)
-
-    epochs.crop(-.200, .600)
+    epochs_ = epochs.copy()
+    epochs_.crop(-.200, .600)
 
     # XXX probably move this correction before saving the epoch data
-    sel_ch = np.where([ch == 'EEG064' for ch in epochs.ch_names])[0]
+    sel_ch = np.where([ch == 'EEG064' for ch in epochs_.ch_names])[0]
     if len(sel_ch):
-        epochs.info['chs'][sel_ch[0]]['kind'] = 3
+        epochs_.info['chs'][sel_ch[0]]['kind'] = 3
     # -------------------------------------------------------------
 
     # Get events specific to epoch definition (stim or motor lock)
-    events = get_events(epochs.events)
+    events = get_events(epochs_.events)
 
     # Identify bad EEG channels
     # XXX Specific to Gabriela's data XXX I think this refers to EEG064, not this, right?
-    epochs_eeg = epochs.pick_types(meg=False, eeg=True, copy=True)
+    epochs_eeg = epochs_.pick_types(meg=False, eeg=True, copy=True)
     #evoked_bad = epochs_eeg.average() #to plot before
     data = epochs_eeg._data
     chan_deviation = np.median(np.std(data, axis=2), axis=0)
@@ -63,6 +63,7 @@ def artefact_rej(eptyp_name,subject,epochs):
     # epochs_eeg.interpolate_bads(reset_bads=False) #eeg only to plot
     # evoked_eeg = epochs_eeg.average()
 
+    # Correct uncropped data
     epochs.info['bads'] += [epochs_eeg.ch_names[ch] for ch in bad_channels]
     epochs.interpolate_bads(reset_bads=False)
 
@@ -92,8 +93,9 @@ def artefact_rej(eptyp_name,subject,epochs):
                 dict(meg='mag', eeg=False),
                 dict(meg='grad', eeg=False)]
     epochs_norm = epochs.copy()
+    epochs_norm.crop(-.200, .600)
     for ch_type in ch_types:
-        pick = mne.pick_types(epochs.info, **ch_type)
+        pick = mne.pick_types(epochs_.info, **ch_type)
         data = epochs_norm._data[:, pick, :]
         ntrial, nchan, ntime = data.shape
         mean = np.median(np.median(data, axis=1), axis=0)
@@ -103,7 +105,7 @@ def artefact_rej(eptyp_name,subject,epochs):
         epochs_norm._data[:, pick, :] = data
 
     # TODO eeg is downweighted
-    pick = mne.pick_types(epochs.info, eeg=True, meg=True)
+    pick = mne.pick_types(epochs_.info, eeg=True, meg=True)
     data = epochs_norm._data
     trial_deviation = np.median(np.std(data, axis=2), axis=1)
     threshold = np.median(trial_deviation) + 10 * mad(trial_deviation)
@@ -117,7 +119,7 @@ def artefact_rej(eptyp_name,subject,epochs):
 
 #report.save(open_browser=open_browser)
 
-    return epochs
+    return epochs  # [fig1, fig2, ]
 
     #
     # # TODO put this into a function and relaunch the mask
