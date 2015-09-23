@@ -5,8 +5,6 @@ import os.path as op
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data')
-# data_path = '/Volumes/INSERM/data'
-
 
 pass_errors = False
 
@@ -148,7 +146,8 @@ clu_threshold = 0.05
 # TO RUN TESTS ################################################################
 use_ica = False  # XXX deal with bad chan first
 # runs = [1]
-subjects = [subjects[0]]
-subjects = ['s23_pf120155']
+#subjects = [subjects[0]]
+#subjects = ['s23_pf120155']
 epochs_params = [epochs_params[0]]
-data_path = '/Users/Gabriela/Documents/2015-2016/P3/python/meg_expectation_p3/data'
+#data_path = '/Users/Gabriela/Documents/2014-2015/P3/python/meg_expectation_p3/data'
+data_path = '/Volumes/INSERM/data'
