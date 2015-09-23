@@ -41,22 +41,23 @@ for subject in subjects:
     n_time = len(epochs.times)
     evokeds_abs, evokeds_pst = list(), list()
     soas = [17, 33, 50, 67, 83]
+    ch_picks = range(len(epochs.ch_names))
     for s, soa in enumerate(soas):
         # find absent trials
         sel = np.where((np.array(events.soa_ttl) == soa) &
                        (np.array(events.present) == False))[0]
-        evoked_abs = epochs[sel].average(picks=range(len(epochs.ch_names)))
+        evoked_abs = epochs[sel].average(picks=ch_picks)
         # change classic averaging with robust averaging (hybrid median mean)
         evoked_abs.data = robust_mean(epochs._data[sel, :, :], axis=0,
-                                      percentile=[10, 90])
+                                      percentile=[10, 90])[ch_picks, :]
 
         # find present trials
         sel = np.where((np.array(events.soa_ttl) == soa) &
                        (np.array(events.present)))[0]
-        evoked_pst = epochs[sel].average(picks=range(len(epochs.ch_names)))
+        evoked_pst = epochs[sel].average(picks=ch_picks)
         # change classic averaging with robust averaging (hybrid median mean)
         evoked_pst.data = robust_mean(epochs._data[sel, :, :], axis=0,
-                                      percentile=[10, 90])
+                                      percentile=[10, 90])[ch_picks, :]
         # XXX MNE uses trial number as a weight in subtractions
         evoked_abs.nave = 1
         evoked_pst.nave = 1
@@ -76,11 +77,13 @@ for subject in subjects:
     # -- force mne to take all channels instead of meg and eeg
     events = np.zeros((5, 3), int)
     data = [evoked.data for evoked in evokeds_abs]
-    template_abs = EpochsArray(data, epochs.info, events).average()
+    template_abs = EpochsArray(data, epochs.info, events,
+                               tmin=epochs.times.min()).average(picks=ch_picks)
     template_abs.comment = 'absent'
     template_abs.nave = 1  # XXX Stupid MNE
     data = [evoked.data for evoked in evokeds_pst]
-    template_pst = EpochsArray(data, epochs.info, events).average()
+    template_pst = EpochsArray(data, epochs.info, events,
+                               tmin=epochs.times.min()).average(picks=ch_picks)
     template_pst.comment = 'present'
     template_pst.nave = 1  # XXX Stupid MNE
 
@@ -107,8 +110,6 @@ for subject in subjects:
         for s, soa in enumerate(soas):
             imshow(axes[s, 0], evokeds_pst[s], picks, mM)
             imshow(axes[s, 1], evokeds_abs[s], picks, mM)
-            template_abs_ = template_abs.copy()
-            template_abs_.times = evokeds_pst[s].times
             imshow(axes[s, 2], evokeds_pst[s] - template_abs, picks, mM)
             # imshow(axes[s, 2], evokeds_pst[s] - evokeds_abs[s], picks, mM)
 
