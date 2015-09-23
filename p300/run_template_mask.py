@@ -1,36 +1,24 @@
 import os.path as op
 import matplotlib.pyplot as plt
 import numpy as np
-
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 from mne.epochs import EpochsArray
 
 from jr.stats import robust_mean
-from meeg_preprocessing.utils import setup_provenance
+from jr import OnlineReport
 
 from p300.conditions import get_events
+from scripts.config import data_path, subjects, chan_types
 
-from scripts.config import (
-    data_path,
-    subjects,
-    results_dir,
-    events_fname_filt_tmp,
-    epochs_params,
-    open_browser,
-    chan_types
-)
-
-
-report, run_id, results_dir, logger = setup_provenance(script=__file__,
-                                                       results_dir=results_dir)
-
+report = OnlineReport()
 
 # force separation of magnetometers and gradiometers
 if 'meg' in [i['name'] for i in chan_types]:
     chan_types = [dict(name='mag'), dict(name='grad')] + \
                  [dict(name=i['name']) for i in chan_types
-                                           if i['name'] != 'meg']
+                  if i['name'] != 'meg']
+
 # only run on stim lock
 ep_name = 'stim_lock'
 
@@ -48,7 +36,8 @@ for subject in subjects:
     events = get_events(epochs.events)
 
     # Apply each contrast and Realign
-    # NB: The TTL setup has different SOA between trigger & mask: realign necessary
+    # NB: The TTL setup has different SOA between trigger & mask:
+    # realign necessary
     n_time = len(epochs.times)
     evokeds_abs, evokeds_pst = list(), list()
     soas = [17, 33, 50, 67, 83]
@@ -72,8 +61,8 @@ for subject in subjects:
         evoked_abs.nave = 1
         evoked_pst.nave = 1
 
-        toi = np.arange(soa * sfreq / 1000, n_time - ((83 - soa) * sfreq
-                                                       / 1000)).astype(int)
+        toi = np.arange(soa * sfreq / 1000,
+                        n_time - ((83 - soa) * sfreq / 1000)).astype(int)
 
         evoked_abs.data = evoked_abs.data[:, toi]
         evoked_abs.times = evoked_abs.times[0:len(toi)]
@@ -84,36 +73,34 @@ for subject in subjects:
         evokeds_pst.append(evoked_pst)
 
     # Create templates
-    #--- force mne to take all channels instead of meg and eeg
+    # -- force mne to take all channels instead of meg and eeg
     events = np.zeros((5, 3), int)
     data = [evoked.data for evoked in evokeds_abs]
     template_abs = EpochsArray(data, epochs.info, events).average()
     template_abs.comment = 'absent'
-    template_abs.nave = 1 # XXX Stupid MNE
+    template_abs.nave = 1  # XXX Stupid MNE
     data = [evoked.data for evoked in evokeds_pst]
     template_pst = EpochsArray(data, epochs.info, events).average()
     template_pst.comment = 'present'
-    template_pst.nave = 1 # XXX Stupid MNE
+    template_pst.nave = 1  # XXX Stupid MNE
 
     all_templates.append([template_abs, template_pst])
 
-    ############################################################################
+    ###########################################################################
     # Plot
     # color min max from average
     # generic plotting function
-    imshow = lambda ax, ep, picks, mM: ax.imshow(ep.data[picks, :], vmin=-mM,
-                                             vmax=mM, interpolation='none',
-                                             aspect='auto', cmap='RdBu_r',
-                                            extent=[min(ep.times),
-                                                    max(ep.times), 0,
-                                                    len(picks)])
+    def imshow(ax, ep, picks, mM):
+        ax.imshow(ep.data[picks, :], vmin=-mM, vmax=mM, interpolation='none',
+                  aspect='auto', cmap='RdBu_r', extent=[min(ep.times),
+                  max(ep.times), 0, len(picks)])
 
     # each figure corresponds to a sensor type
     for c, chan_type in enumerate(chan_types):
         # select channels
         picks = [i for k, p in picks_by_type(template_pst.info) for i in p
-                                            if k in chan_type['name']]
-        mM = abs(np.percentile(template_pst.data[picks,:], 99.))
+                 if k in chan_type['name']]
+        mM = abs(np.percentile(template_pst.data[picks, :], 99.))
         # figure soas x [(target mask), mask only, (target & mask) - mask]
         fig, axes = plt.subplots(len(soas) + 1, 3)
         # each line corresponds to a soa
@@ -134,12 +121,11 @@ for subject in subjects:
         report.add_figs_to_section(fig, subject + chan_type['name'], subject)
     # plt.show()
 
-
-    ############################################################################
+    ##########################################################################
     # Save
     ave_fname = op.join(data_path, 'MEG', subject,
-            '{}-{}-mask-ave.fif'.format(ep_name, subject))
+                        '{}-{}-mask-ave.fif'.format(ep_name, subject))
 
     mne.write_evokeds(ave_fname, [template_pst, template_abs])
 
-report.save(open_browser=open_browser)
+report.save()
