@@ -141,7 +141,7 @@ for subject in subjects:
             if ch_type in ['eeg', 'meg', 'mag']:
                 if ch_type == 'meg':
                     ch_type = 'mag'
-            fig = evoked.plot_topomap(times, ch_type=ch_type)
+            fig = evoked.plot_topomap(times, ch_type=ch_type, show=False)
             report.add_figs_to_section(
                 fig, '%s (%s): topo %s' % (subject, name, ch_type),
                                         'Topo: ' + name)
