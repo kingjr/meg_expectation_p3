@@ -4,14 +4,20 @@ import numpy as np
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 from mne.epochs import EpochsArray
+from mne.report import Report
 
 from jr.stats import robust_mean
-from jr import OnlineReport
+#from jr import OnlineReport
+
+
 
 from p300.conditions import get_events
-from scripts.config import data_path, subjects, chan_types
+from scripts.config import data_path, subjects, chan_types, results_dir
 
-report = OnlineReport()
+#report = OnlineReport()
+# XXX NEED TO CLEAN TO USE OnlineReport (save)
+report = Report()
+report.data_path = op.join(results_dir,'run_template_mask')
 
 # force separation of magnetometers and gradiometers
 if 'meg' in [i['name'] for i in chan_types]:
@@ -89,6 +95,7 @@ for subject in subjects:
         evoked_abs.nave = 1
         evoked_pst.nave = 1
 
+        # realign selected epochs to mask onset
         toi = np.arange(soa * sfreq / 1000,
                         n_time - ((83 - soa) * sfreq / 1000)).astype(int)
 
@@ -100,7 +107,7 @@ for subject in subjects:
         evoked_pst.times = evoked_pst.times[0:len(toi)]
         evokeds_pst.append(evoked_pst)
 
-    # Create templates
+    # Create overall templates (average of mask-locked evo abs across SOA)
     # -- force mne to take all channels instead of meg and eeg
     events_ = np.zeros((5, 3), int)
     data = [evoked.data for evoked in evokeds_abs]
@@ -149,12 +156,12 @@ for subject in subjects:
                   aspect='auto', cmap='RdBu_r', extent=[min(ep.times),
                   max(ep.times), 0, len(picks)])
 
-    for s, soa in enumerate(soas):
-        sel = np.where((np.array(events.soa_ttl) == soa) &
-                       (np.array(events.present) == True))[0]
-        evo = evokeds_pst_nomask[sel].average()
-        plt.matshow(evo.data)
-    plt.show()
+    # for s, soa in enumerate(soas):
+    #     sel = np.where((np.array(events.soa_ttl) == soa) &
+    #                    (np.array(events.present) == True))[0]
+    #     evo = evokeds_pst_nomask[sel].average()
+    #     plt.matshow(evo.data)
+    # plt.show()
 
     # each figure corresponds to a sensor type
     for c, chan_type in enumerate(chan_types):
