@@ -8,7 +8,6 @@ import mne
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
-#from scripts.wip_artefacts import artifact_reject
 
 from toolbox.jr_toolbox.utils import (nested_analysis, meg_to_gradmag,
                                       share_clim)
@@ -39,7 +38,7 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
 
     # Get MEG data
     epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-unmasked-{}-epo.fif'.format(eptyp_name, subject))
+                        '{}-{}-epo.fif'.format(eptyp_name, subject))
     epochs = mne.read_epochs(epo_fname)
     # Get events specific to epoch definition (stim or motor lock)
     events = get_events(epochs.events)
