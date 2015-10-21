@@ -41,7 +41,7 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
 
     # Get MEG data
     epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(eptyp_name, subject))
+                        '{}-unmasked-{}-epo.fif'.format(eptyp_name, subject))
     epochs = mne.read_epochs(epo_fname)
     # Get events specific to epoch definition (stim or motor lock)
     events = get_events(epochs.events)
