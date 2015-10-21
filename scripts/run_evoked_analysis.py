@@ -33,9 +33,7 @@ from itertools import product
 
 for subject, epoch_params, epoch_type in product(subjects, epochs_params,
                                                  epochs_types):
-    # Extract events from mat file
-    bhv_fname = op.join(data_path, 'behavior',
-                        '{}_behaviorMEG.mat'.format(subject[-2:]))
+
     eptyp_name = epoch_params['name'] + epoch_type
     print(subject, eptyp_name)
 
