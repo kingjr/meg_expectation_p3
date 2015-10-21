@@ -37,6 +37,7 @@ ep_name = 'stim_lock'
 
 # loop across subjects
 for subject in subjects:
+    print(subject)
     epo_fname = op.join(data_path, 'MEG', subject,
                         '{}-{}-epo.fif'.format(ep_name, subject))
     epochs = mne.read_epochs(epo_fname)
