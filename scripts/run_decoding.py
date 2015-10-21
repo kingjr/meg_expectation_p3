@@ -25,11 +25,14 @@ report, run_id, _, logger = setup_provenance(
 
 from itertools import product
 
-for subject, epoch_params, epoch_type in product(subjects, epochs_params,
-                                                 epochs_types):
+#for subject, epoch_params, epoch_type in product(subjects, epochs_params,
+#                                                 epochs_types):
+for subject, epoch_params in product(subjects, epochs_params):
+    print(subject)
     # Extract events from mat file
     bhv_fname = op.join(data_path, 'behavior',
                         '{}_behaviorMEG.mat'.format(subject[-2:]))
+    epoch_type = ''
     eptyp_name = epoch_params['name'] + epoch_type
     print(eptyp_name)
 
