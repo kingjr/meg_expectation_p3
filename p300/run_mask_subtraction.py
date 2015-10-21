@@ -54,7 +54,8 @@ for subject in subjects:
     # loop across soas
     soas = [17, 33, 50, 67, 83]
     for soa in soas:
-        sel = np.where(np.array(events.soa) == soa)[0]
+        # realign mask template and subtract it from all trials, including absent
+        sel = np.where(np.array(events.soa_ttl) == soa)[0]
         for trial in sel:
             toi = np.arange(soa * sfreq / 1000,
                             n_time - ((83 - soa) * sfreq / 1000)).astype(int)
