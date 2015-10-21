@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os.path as op
 import mne
+from mne.io import set_eeg_reference
 from meeg_preprocessing.utils import setup_provenance
 # from mne.datasets import sample
 from p300.conditions import get_events
@@ -46,6 +47,16 @@ def artefact_rej(eptyp_name,subject,epochs):
     # Correct uncropped data
     epochs.info['bads'] += [epochs_eeg.ch_names[ch] for ch in bad_channels]
     epochs.interpolate_bads(reset_bads=False)
+
+    #  Average rereference for EEG data
+    # TODO HOW DO I DO THIS FOR EEG ONLY??
+    from mne import pick_types
+    picks = pick_types(epochs.info, eeg=True, meg=False)
+    data = epochs._data[:, picks, :]
+    # mean across channel
+    ref = np.mean(epochs._data, axis=1)
+    data -= np.tile(ref, [1, len(picks), 1])  # probably needs a transpose here
+    epochs._data[:, picks, :] = picks
 
     # Identify bad trials
     # --- normalize all channel types
