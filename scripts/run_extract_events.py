@@ -42,13 +42,6 @@ for subject in subjects:
             continue
         raw = mne.io.Raw(fname)
 
-        # Deal with unwanted initial triggers
-        # if subject in events_params.keys():
-        #     # r - 1 because run starts at 1 not 0
-        #     events_param = events_params[subject][r - 1]
-        # else:
-        #     events_param = dict()
-
         events = extract_events(raw)
         print(len(events))
 
