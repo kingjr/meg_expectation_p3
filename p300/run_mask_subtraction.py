@@ -1,74 +1,81 @@
-import os.path as op
-import matplotlib.pyplot as plt
 import numpy as np
 
-import mne
-from mne.io.pick import _picks_by_type as picks_by_type
-
-from toolbox.jr_toolbox.utils import Evokeds_to_Epochs as avg2epo
-
-from meeg_preprocessing.utils import setup_provenance
-
-from p300.conditions import get_events
-
-from scripts.config import (
-    data_path,
-    subjects,
-    results_dir,
-    events_fname_filt_tmp,
-    epochs_params,
-    open_browser,
-    chan_types
-)
+def simulate_data():
+    """Simulate data"""
+    from mne import create_info, EpochsArray
+    n_trial, n_chan, n_time = 100, 64, 200
+    soas = np.array([17, 33, 50, 67, 83])
+    event_soa = soas[np.random.randint(0, len(soas), n_trial)]
+    event_present = np.random.randint(0, 2, n_trial)
+    events = np.hstack((
+        np.zeros((n_trial, 2), int),
+        np.array(event_soa + 1e3 * event_present, int)[:, None]))
+    ch_names = ['EEG_%i' % ch for ch in range(n_chan)]
+    info = create_info(ch_names, 250, 'eeg')
+    epochs = EpochsArray(np.zeros((n_trial, n_chan, n_time)),
+                         info, events, tmin=-.100)
+    return epochs
 
 
-report, run_id, results_dir, logger = setup_provenance(
-     script=__file__, results_dir=results_dir)
+def subtract_mask(epochs, event_soa, event_present):
+    """
+    Parameters
+    ----------
+        epochs : Epochs
+        event_soa : np.array, shape (n_trials,)
+            Contains SOA ttl value [17, 33, 50, 67, 83] (include mask SOA)
+        event_present : np.array, shape (n_trials,)
+            Contains 0 and 1.
+    """
+    from mne import pick_types
+    from jr.stats import robust_mean
+    # Define SOA
+    soas = np.array([17, 33, 50, 67, 83])
+    n_trial, n_chan, n_time = epochs._data.shape
 
+    for trial, (soa, present) in enumerate(zip(event_soa, event_present)):
+        t = np.where(epochs.times >= soa / 1000.)[0][0]
+        # add mask data
+        epochs._data[trial, :, t] = -1
+        # add target data
+        if present:
+            t0 = np.where(epochs.times >= 0.)[0][0]
+            epochs._data[trial, :, t0] = 1
 
-# force separation of magnetometers and gradiometers
-if 'meg' in [i['name'] for i in chan_types]:
-    chan_types = [dict(name='mag'), dict(name='grad')] + \
-                 [dict(name=i['name']) for i in chan_types
-                                           if i['name'] != 'meg']
-
-# only run on stim lock
-ep_name = 'stim_lock'
-
-# loop across subjects
-for subject in subjects:
-    print(subject)
-    epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(ep_name, subject))
-    epochs = mne.read_epochs(epo_fname)
+    # Create mask template
     sfreq = epochs.info['sfreq']
-    events = get_events(epochs.events)
-    # load mask
-    mask_fname = op.join(data_path, 'MEG', subject,
-            '{}-{}-mask-ave.fif'.format(ep_name, subject))
-    template = mne.read_evokeds(mask_fname, 'absent')
-
-    # remove template from individual epochs
-    n_epoch, n_all_chan, n_time = epochs._data.shape
-    n_data_chan, n_time_template = template.data.shape
-    data = np.zeros((n_epoch, n_data_chan, n_time_template))
-    # loop across soas
-    soas = [17, 33, 50, 67, 83]
+    # --- Align mask trial
+    data_mask = list()
     for soa in soas:
-        # realign mask template and subtract it from all trials, including absent
-        sel = np.where(np.array(events.soa_ttl) == soa)[0]
-        for trial in sel:
-            toi = np.arange(soa * sfreq / 1000,
-                            n_time - ((83 - soa) * sfreq / 1000)).astype(int)
-            data[trial, :, :] = epochs._data[trial, :, toi].transpose() - \
-                                template.data
-    epochs._data = data
-    epochs.times = epochs.times[:n_time_template]
-    epochs.tmax = max(epochs.times)
-    # save to new epochs
-    unmasked_fname = op.join(data_path, 'MEG', subject,
-            '{}-unmasked-{}-epo.fif'.format(ep_name, subject))
-    epochs.save(unmasked_fname)
-    # TODO plots?
+        # select absent trials
+        sel = np.where((event_soa == soa) & (event_present == 0))[0]
+        mask = epochs._data[sel, :, :]
+        # add zeros before and after
+        preshift = (soas[-1] - soa) / 1000. * sfreq
+        pre = np.zeros((len(sel), n_chan, preshift))
+        postshift = soa / 1000. * sfreq
+        post = np.zeros((len(sel), n_chan, postshift))
+        mask = np.concatenate((pre, mask, post), axis=2)
+        data_mask.append(mask)
+        print(preshift, postshift)
+    # --- Robust average across all mask
+    data_mask = np.concatenate(data_mask, axis=0)
+    mask_template = robust_mean(data_mask, axis=0)
+    # plt.matshow(data_mask[:, 0, :])
 
-report.save(open_browser=open_browser)
+    # Substract mask template
+    picks = pick_types(epochs.info, meg=True, eeg=True, stim=False, misc=False)
+    for soa in soas:
+        # select all target present trials
+        sel = np.where(event_soa == soa)[0]
+        data = epochs._data[sel, :, :]
+        # align mask to target-locked
+        mask = mask_template
+        preshift = (soas[-1] - soa) / 1000. * sfreq
+        postshift = soa / 1000. * sfreq
+        mask = mask[:, preshift:-postshift]
+        # subtract target-locked mask onto target-locked data
+        data[:, picks, :] -= np.tile(mask[picks, :], [len(sel), 1, 1])
+        epochs._data[sel, :, :] = data
+    # plt.matshow(epochs._data[:, 0, :], aspect='auto')
+    return epochs
