@@ -14,7 +14,8 @@ from mne.viz import plot_drop_log
 
 from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
-from p300.conditions import get_events, events_select_condition
+from p300.conditions import events_select_condition, get_events
+from p300.run_mask_subtraction import subtract_mask
 
 from scripts.wip_artefacts import artefact_rej
 
@@ -65,10 +66,6 @@ for subject in subjects:
         # Set ECG EOG channels XXX again?
         set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
 
-        # # Interpolate bad channels
-        # if 'eeg' in [i['name'] for i in chan_types] and len(raw.info['bads']) > 0:
-        #     raw.interpolate_bad_channels()
-
         # Get events identified in run_extract_events
         events = mne.read_events(
             op.join(this_path, events_fname_filt_tmp.format(r)))
@@ -107,13 +104,14 @@ for subject in subjects:
         # Concatenate runs
         epochs = mne.epochs.concatenate_epochs(epochs_list)
 
-        # Artefact rejection (EEG channels then trials)
+        # Artefact rejection and rereference EEG data
+        # (EEG channel rejection, rereference, then trial rejection)
         epochs = artefact_rej(name,subject,epochs)
 
-        # Save
+        # Save epochs before mask subtraction
         epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
 
-        # Plot
+        # Plot before mask subtraction
         #-- % dropped
         report.add_figs_to_section(
             plot_drop_log(epochs.drop_log), '%s (%s): total dropped'
@@ -122,17 +120,40 @@ for subject in subjects:
         ch = mne.pick_channels(epochs.ch_names, ['STI101'])
         epochs._data[:, ch,:] = (2.*(epochs._data[:,ch,:] > 1) +
                                  1.*(epochs._data[:,ch,:] < 8192))
-
-        # fig = mne.viz.plot_image_epochs(epochs, ch, scalings=dict(stim=1),
-        #                                 units=dict(stim=''), vmin=1, vmax=3,
-        #                                 show=False)
-        # report.add_figs_to_section(fig, '%s (%s): triggers' % (subject, name),
-        #                            'Triggers: ' + name)
-
-        #-- % evoked
+        #-- % evoked before mask subtraction
         evoked = epochs.average()
         fig = evoked.plot(show=False)
         report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
+                                   'Butterfly: ' + name)
+        times = np.arange(epochs.tmin, epochs.tmax,
+                          (epochs.tmax - epochs.tmin) / 20)
+        for ch_type in chan_types:
+            ch_type = ch_type['name']
+            if ch_type in ['eeg', 'meg', 'mag']:
+                if ch_type == 'meg':
+                    ch_type = 'mag'
+            fig = evoked.plot_topomap(times, ch_type=ch_type, show=False)
+            report.add_figs_to_section(
+                fig, '%s (%s): topo %s' % (subject, name, ch_type),
+                                        'Topo: ' + name)
+
+        # # Mask subtraction
+        soas = get_events(events)['soa_ttl']
+        target_boolean = get_events(events)['present']
+        target_present = []
+        for ii, target in enumerate(target_boolean):
+            target_present.append(int(target))
+        target_present = np.array(target_present)
+        epochs = subtract_mask(epochs, soas, target_present)
+
+        # Save mask-subtracted data
+        epochs.save(op.join(this_path,
+                    '{}-unmasked-{}-epo.fif'.format(name, subject)))
+
+        # Plot mask-subtracted data
+        evoked = epochs.average()
+        fig = evoked.plot(show=False)
+        report.add_figs_to_section(fig, '%s (%s) UNMASKED: butterfly' % (subject, name),
                                    'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,
                           (epochs.tmax - epochs.tmin) / 20)
