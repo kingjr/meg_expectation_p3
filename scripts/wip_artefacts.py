@@ -54,9 +54,10 @@ def artefact_rej(eptyp_name,subject,epochs):
     picks = pick_types(epochs.info, eeg=True, meg=False)
     data = epochs._data[:, picks, :]
     # mean across channel
-    ref = np.mean(epochs._data, axis=1)
-    data -= np.tile(ref, [1, len(picks), 1])  # probably needs a transpose here
-    epochs._data[:, picks, :] = picks
+    #ref = np.mean(epochs._data, axis=1)
+    ref = np.mean(data, axis=1)
+    data -= np.tile(ref, [len(picks),1, 1]).transpose(1,0,2)  # probably needs a transpose here
+    epochs._data[:, picks, :] = data
 
     # Identify bad trials
     # --- normalize all channel types
