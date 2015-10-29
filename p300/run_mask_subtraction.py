@@ -14,6 +14,16 @@ def simulate_data():
     info = create_info(ch_names, 250, 'eeg')
     epochs = EpochsArray(np.zeros((n_trial, n_chan, n_time)),
                          info, events, tmin=-.100)
+    
+    for trial, (soa, present) in enumerate(zip(event_soa, event_present)):
+        t = np.where(epochs.times >= soa / 1000.)[0][0]
+        # add mask data
+        epochs._data[trial, :, t] = -1
+        # add target data
+        if present:
+            t0 = np.where(epochs.times >= 0.)[0][0]
+            epochs._data[trial, :, t0] = 1
+
     return epochs
 
 
@@ -32,15 +42,6 @@ def subtract_mask(epochs, event_soa, event_present):
     # Define SOA
     soas = np.array([17, 33, 50, 67, 83])
     n_trial, n_chan, n_time = epochs._data.shape
-
-    for trial, (soa, present) in enumerate(zip(event_soa, event_present)):
-        t = np.where(epochs.times >= soa / 1000.)[0][0]
-        # add mask data
-        epochs._data[trial, :, t] = -1
-        # add target data
-        if present:
-            t0 = np.where(epochs.times >= 0.)[0][0]
-            epochs._data[trial, :, t0] = 1
 
     # Create mask template
     sfreq = epochs.info['sfreq']
