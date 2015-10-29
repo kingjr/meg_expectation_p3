@@ -9,8 +9,8 @@ from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
 
-from toolbox.jr_toolbox.utils import (nested_analysis, meg_to_gradmag,
-                                      share_clim)
+from toolbox.jr_toolbox.utils import (meg_to_gradmag, share_clim)
+from jr.stats import nested_analysis
 
 from config import (
     data_path,
