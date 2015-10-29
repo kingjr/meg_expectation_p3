@@ -41,7 +41,7 @@ def artefact_rej(eptyp_name,subject,epochs):
         return np.median(np.abs(x - center), axis=axis)
 
     # Define the threshold, find bad channels
-    chan_threshold = np.median(chan_deviation) + 10 * mad(chan_deviation)
+    chan_threshold = np.median(chan_deviation) + 7 * mad(chan_deviation)
     bad_channels = np.where(chan_deviation > chan_threshold)[0]
 
     # Correct uncropped data
