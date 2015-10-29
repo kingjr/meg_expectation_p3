@@ -138,13 +138,8 @@ for subject in subjects:
                                         'Topo: ' + name)
 
         # # Mask subtraction
-        soas = get_events(events)['soa_ttl']
-        target_boolean = get_events(events)['present']
-        target_present = []
-        for ii, target in enumerate(target_boolean):
-            target_present.append(int(target))
-        target_present = np.array(target_present)
-        epochs = subtract_mask(epochs, soas, target_present)
+        events = get_events(epochs.events)
+        epochs = subtract_mask(epochs, events['soa_ttl'], events['present'])
 
         # Save mask-subtracted data
         epochs.save(op.join(this_path,
@@ -164,7 +159,7 @@ for subject in subjects:
                     ch_type = 'mag'
             fig = evoked.plot_topomap(times, ch_type=ch_type, show=False)
             report.add_figs_to_section(
-                fig, '%s (%s): topo %s' % (subject, name, ch_type),
+                fig, '%s (%s): UNMASKED: topo %s' % (subject, name, ch_type),
                                         'Topo: ' + name)
 
 report.save(open_browser=open_browser)
