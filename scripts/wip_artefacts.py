@@ -49,13 +49,13 @@ def artefact_rej(eptyp_name,subject,epochs):
     epochs.interpolate_bads(reset_bads=False)
 
     #  Average rereference for EEG data
-    # TODO HOW DO I DO THIS FOR EEG ONLY??
     from mne import pick_types
-    picks = pick_types(epochs.info, eeg=True, meg=False)
-    data = epochs._data[:, picks, :]
-    # mean across channel
-    #ref = np.mean(epochs._data, axis=1)
-    ref = np.mean(data, axis=1)
+    # picks = pick_types(epochs.info, eeg=True, meg=False)
+    # XXX Mne seem to only select  non interlpolated channels
+    picks =  np.array([ii for ii, chan in enumerate(epochs.ch_names)  if (chan[:3] == 'EEG') and (chan != 'EEG064')])
+    data = np.copy(epochs._data[:, picks, :])
+    # mean across channels
+    ref = robust_mean(data, axis=1, percentile=[5, 95])
     data -= np.tile(ref, [len(picks),1, 1]).transpose(1,0,2)  # probably needs a transpose here
     epochs._data[:, picks, :] = data
 
