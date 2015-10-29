@@ -46,7 +46,7 @@ def analysis(name, typ, condition=None, query=None):
 contrast_pst = analysis('presence', 'categorize', condition='present')
 
 # PAS for all trials
-contrast_pas = analysis('pas_all', 'regress', condition='pas')
+regress_pas = analysis('pas_all', 'regress', condition='pas')
 
 # PAS for present trials only
 regress_pas_pst = analysis('pas_pst', 'regress', condition='pas',
@@ -72,13 +72,6 @@ regress_abs_seen = analysis('abs_seen', 'regress', condition='abs_seen')
 
 # 5 SOAs compared to absent
 regress_abs_soa = analysis('abs_soa', 'regress', condition='abs_soa')
-
-# regress_pas_list = list()
-# for soa in soas:
-#     sub_regress_ = analysis('soa_%s' % soa, 'regress', condition='pas',
-#                             query='soa==%s' % soa)
-#     pas_regress_list.append(sub_regress_)
-# regress_pas_soa = analysis('soa_pas', 'regress', condition=pas_regress_list)
 
 # # Effects of visibility context
 
@@ -108,7 +101,7 @@ regress_block_pas = analysis('block_pas', 'regress',
 contrast_block_list = list()
 for seen in ['seen', 'unseen']:
     sub_contrast_ = analysis('block_%s' % seen, 'categorize', condition='block',
-                             query='present==True and soa!=17 and soa!=83 and seen==%s' % seen)
+                             query='present==True and soa!=17 and soa!=83 and seen=="%s"' % seen)
     contrast_block_list.append(sub_contrast_)
 contrast_block_seen = analysis('block_seen','categorize',
                                condition = contrast_block_list)
@@ -139,7 +132,7 @@ contrast_local_pas = analysis('local_pas','regress',
 contrast_local_list = list()
 for seen in ['seen', 'unseen']:
     sub_contrast_ = analysis('local_%s' % seen, 'categorize',
-                             condition='local_context', query='seen==%s' % seen)
+                             condition='local_context', query='seen=="%s"' % seen)
     contrast_local_list.append(sub_contrast_)
 contrast_local_seen = analysis('local_seen', 'categorize',
                                condition=contrast_local_list)
@@ -157,4 +150,7 @@ contrast_motor = analysis('motor','categorize', condition = 'letter_resp')
 
 # analyses = [contrast_pst, regress_pas_pst,regress_abs_seen,regress_abs_soa,
 #             regress_block_soa, contrast_block_seen,contrast_local_seen]
-analyses = [contrast_pst]
+analyses = [contrast_local_seen]
+#analyses = [contrast_local_soa,contrast_local_pas]
+
+## TODO Fix all pas analyses, contrast_local_seen, contrast_block_seen
