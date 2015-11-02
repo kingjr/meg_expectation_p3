@@ -185,13 +185,16 @@ def get_events(events):
 
         # Seen/Unseen (0 vs. 1,2,3) together with absent trials
         if event['present'] == False:
-            event['abs_seen'] = 'absent'
-        else:
-            event['abs_seen'] = event['seen']
+            event['abs_seen'] = 0
+        elif event['present'] == True:
+            if event['seen'] == 'seen':
+                event['abs_seen'] = 1
+            elif event['seen'] == 'unseen':
+                event['abs_seen'] = 2
 
         # SOA together with absent trials
         if event['present'] == False:
-            event['abs_soa'] = 'absent'
+            event['abs_soa'] = 0
         else:
             event['abs_soa'] = event['soa']
 
