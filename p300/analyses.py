@@ -116,7 +116,7 @@ for soa in soas:
                              condition = 'local_context',
                              query='soa_ttl==%s' % soa)
     contrast_local_list.append(sub_contrast_)
-contrast_local_soa = analysis('local_soa','regress',
+regress_local_soa = analysis('local_soa','regress',
                               condition = contrast_local_list)
 
 # Local N-1 context, PAS (all trials)
@@ -125,7 +125,7 @@ for pas in range(4):
     sub_contrast_ = analysis('local_pas_%s' % soa, 'categorize',
                              condition = 'local_context', query='pas==%s' % pas)
     contrast_local_list.append(sub_contrast_)
-contrast_local_pas = analysis('local_pas','regress',
+regress_local_pas = analysis('local_pas','regress',
                               condition = contrast_local_list)
 
 # Local N-1 context, seen/unseen (all trials)
@@ -148,9 +148,8 @@ contrast_target = analysis('target','categorize', condition = 'target')
 contrast_motor = analysis('motor','categorize', condition = 'letter_resp')
 
 
-# analyses = [contrast_pst, regress_pas_pst,regress_abs_seen,regress_abs_soa,
-#             regress_block_soa, contrast_block_seen,contrast_local_seen]
-analyses = [contrast_local_seen]
-#analyses = [contrast_local_soa,contrast_local_pas]
-
-## TODO Fix all pas analyses, contrast_local_seen, contrast_block_seen
+analyses = [contrast_pst, regress_pas, regress_pas_pst,regress_pas_mid,
+            contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
+            regress_abs_seen,regress_abs_soa, contrast_block, regress_block_soa,
+            regress_block_pas, contrast_block_seen, contrast_local,
+            regress_local_soa, regress_local_pas, contrast_local_seen]
