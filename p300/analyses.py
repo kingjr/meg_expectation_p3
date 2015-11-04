@@ -76,14 +76,14 @@ regress_abs_soa = analysis('abs_soa', 'regress', condition='abs_soa')
 # # Effects of visibility context
 
 # Global block context (present, middle SOAs only)
-contrast_block = analysis('block','categorize', condition='block',
+contrast_block = analysis('block', 'categorize', condition='block',
                           query='present==True and soa!=17 and soa!=83')
 
 # Global block context, SOA (present, middle SOAs only)
 contrast_block_list = list()
 for soa in mid_soas:
-    sub_contrast_ = analysis('block_soa_%s' % soa, 'categorize', condition='block',
-                        query='soa==%s' % soa)
+    sub_contrast_ = analysis('block_soa_%s' % soa, 'categorize',
+                             condition='block', query='soa==%s' % soa)
     contrast_block_list.append(sub_contrast_)
 regress_block_soa = analysis('block_soa', 'regress',
                              condition=contrast_block_list)
@@ -91,48 +91,51 @@ regress_block_soa = analysis('block_soa', 'regress',
 # Global block context, PAS (present, middle SOAs only)
 contrast_block_list = list()
 for pas in range(4):
-    sub_contrast_ = analysis('block_pas_%s' % pas, 'categorize', condition='block',
-                             query='present==True and soa!=17 and soa!=83 and pas==%s' % pas )
+    sub_contrast_ = analysis('block_pas_%s' % pas, 'categorize',
+                             condition='block', query='present==True and \
+                             soa!=17 and soa!=83 and pas==%s' % pas)
     contrast_block_list.append(sub_contrast_)
 regress_block_pas = analysis('block_pas', 'regress',
-                             condition = contrast_block_list)
+                             condition=contrast_block_list)
 
 # Global block context, seen/unseen (present, middle SOAs only)
 contrast_block_list = list()
 for seen in ['seen', 'unseen']:
-    sub_contrast_ = analysis('block_%s' % seen, 'categorize', condition='block',
-                             query='present==True and soa!=17 and soa!=83 and seen=="%s"' % seen)
+    sub_contrast_ = analysis('block_%s' % seen, 'categorize',
+                             condition='block', query='present==True and \
+                             soa!=17 and soa!=83 and seen=="%s"' % seen)
     contrast_block_list.append(sub_contrast_)
-contrast_block_seen = analysis('block_seen','categorize',
-                               condition = contrast_block_list)
+contrast_block_seen = analysis('block_seen', 'categorize',
+                               condition=contrast_block_list)
 
 # Local N-1 context (all trials)
-contrast_local = analysis('local','categorize', condition = 'local_context')
+contrast_local = analysis('local', 'categorize', condition='local_context')
 
 # Local N-1 context, SOA (all trials)
 contrast_local_list = list()
 for soa in soas:
     sub_contrast_ = analysis('local_%s' % soa, 'categorize',
-                             condition = 'local_context',
+                             condition='local_context',
                              query='soa_ttl==%s' % soa)
     contrast_local_list.append(sub_contrast_)
-regress_local_soa = analysis('local_soa','regress',
-                              condition = contrast_local_list)
+regress_local_soa = analysis('local_soa', 'regress',
+                             condition=contrast_local_list)
 
 # Local N-1 context, PAS (all trials)
 contrast_local_list = list()
 for pas in range(4):
     sub_contrast_ = analysis('local_pas_%s' % soa, 'categorize',
-                             condition = 'local_context', query='pas==%s' % pas)
+                             condition='local_context', query='pas==%s' % pas)
     contrast_local_list.append(sub_contrast_)
-regress_local_pas = analysis('local_pas','regress',
-                              condition = contrast_local_list)
+regress_local_pas = analysis('local_pas', 'regress',
+                             condition=contrast_local_list)
 
 # Local N-1 context, seen/unseen (all trials)
 contrast_local_list = list()
 for seen in ['seen', 'unseen']:
     sub_contrast_ = analysis('local_%s' % seen, 'categorize',
-                             condition='local_context', query='seen=="%s"' % seen)
+                             condition='local_context',
+                             query='seen=="%s"' % seen)
     contrast_local_list.append(sub_contrast_)
 contrast_local_seen = analysis('local_seen', 'categorize',
                                condition=contrast_local_list)
@@ -142,14 +145,21 @@ contrast_local_seen = analysis('local_seen', 'categorize',
 # Top vs. bottom: Cannot do because not coded in triggers
 
 # Letter vs. digit stimulus (all present trials)
-contrast_target = analysis('target','categorize', condition = 'target')
+contrast_target = analysis('target', 'categorize', condition='target')
 
 # Motor response (finger to indicate letter or number)
-contrast_motor = analysis('motor','categorize', condition = 'letter_resp')
+contrast_motor = analysis('motor', 'categorize', condition='letter_resp')
 
 
-analyses = [contrast_pst, regress_pas, regress_pas_pst,regress_pas_mid,
+# analyses = [contrast_pst, regress_pas, regress_pas_pst,regress_pas_mid,
+#             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
+#             regress_abs_seen,regress_abs_soa, contrast_block, regress_block_soa,
+#             regress_block_pas, contrast_block_seen, contrast_local,
+#             regress_local_soa, regress_local_pas, contrast_local_seen]
+
+analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
             regress_abs_seen,regress_abs_soa, contrast_block, regress_block_soa,
-            regress_block_pas, contrast_block_seen, contrast_local,
+            contrast_block_seen, contrast_local,
             regress_local_soa, regress_local_pas, contrast_local_seen]
+analyses = [contrast_local, contrast_local_seen, regress_local_pas]
