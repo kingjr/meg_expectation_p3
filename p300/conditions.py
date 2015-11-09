@@ -1,8 +1,6 @@
-
 import mne
 import numpy as np
-import warnings
-import scipy.io as sio
+
 
 def events_select_condition(trigger, condition):
     """Function to handle events and event ids
@@ -30,6 +28,7 @@ def events_select_condition(trigger, condition):
     elif condition == 'motor1':  # remove response not linked to stim
         selection = np.where(trigger >= 2 ** 16)[0]
     return selection
+
 
 def get_events(events):
     """ Define trigger condition correspondance here"""
@@ -64,7 +63,7 @@ def get_events(events):
         # Stimulus category (absent/letter/digit)
 
         # Target present?
-        if trigger_stim in [i * 12 + j for i in range(5) for j in range(1,5)]:
+        if trigger_stim in [i * 12 + j for i in range(5) for j in range(1, 5)]:
             # 1-4 13-16 25-28 37-40 49-52
             event['present'] = False
             event['target'] = np.nan
@@ -86,30 +85,32 @@ def get_events(events):
             event['present'] = True
 
             # Target type
-            if trigger_stim in [4 + i * 12 + j for i in range(5) for j in range(1,5)]:
+            if trigger_stim in [4 + i * 12 + j for i in range(5)
+                                for j in range(1, 5)]:
                 # 5 7 17-20 29-32 41-44 54 56
-                event['target'] = 'letter'
-            elif trigger_stim in [8 + i * 12 + j for i in range(5) for j in range(1,5)]:
+                event['letter_target'] = True
+            elif trigger_stim in [8 + i * 12 + j for i in range(5)
+                                  for j in range(1, 5)]:
                 # 9 11 21-24 33-36 45-48 58 60
-                event['target'] = 'number'
+                event['letter_target'] = False
             else:
                 raise RuntimeError('did not find adequate ttl')
-                event['target'] = np.nan
+                event['letter_target'] = np.nan
 
             # SOA for target-present trials
-            if trigger_stim in range (5,13):
+            if trigger_stim in range(5, 13):
                 # 5, 7, 9, 11 (can be 5-12)
                 event['soa'] = 17
-            elif trigger_stim in range(17,25):
+            elif trigger_stim in range(17, 25):
                 # 17-24
                 event['soa'] = 33
-            elif trigger_stim in range(29,37):
+            elif trigger_stim in range(29, 37):
                 # 29-36
                 event['soa'] = 50
-            elif trigger_stim in range(41,49):
+            elif trigger_stim in range(41, 49):
                 # 41-48
                 event['soa'] = 67
-            elif trigger_stim in range(53,61):
+            elif trigger_stim in range(53,  61):
                 # 54,56,58,60 (can be 53-60)
                 event['soa'] = 83
             else:
@@ -118,35 +119,38 @@ def get_events(events):
 
             event['soa_ttl'] = event['soa']
 
-
-
-        # Forced_choice response (which right hand finger corresponds to letter
-        # response)
-        if (np.binary_repr(trigger_stim,width=2)[-2]!=np.binary_repr(trigger_stim,width=2)[-1]):
-            event['letter_resp'] = 'left'
-        elif (np.binary_repr(trigger_stim,width=2)[-2]==np.binary_repr(trigger_stim,width=2)[-1]):
-            event['letter_resp'] = 'right'
+        # Letter/number response correspondance
+        # (which right hand finger corresponds to letter response)
+        if (np.binary_repr(trigger_stim, width=2)[-2] !=
+                np.binary_repr(trigger_stim, width=2)[-1]):
+            event['letter_resp_left'] = True
+        elif (np.binary_repr(trigger_stim, width=2)[-2] ==
+                np.binary_repr(trigger_stim, width=2)[-1]):
+            event['letter_resp_left'] = False
         else:
-            event['letter_resp'] = np.nan
+            event['letter_resp_left'] = np.nan
 
-        # motor response
-        if trigger_motor1 == (2 ** 13):
-            event['motor1'] = 'right'
-        elif trigger_motor1 == (2 ** 14):
-            event['motor1'] = 'left'
+        # Forced choice motor response (out of two fingers on right hand
+        if trigger_motor1 == (2 ** 14):
+            event['motor1_left'] = True
+            event['missed_m1'] = False
+        elif trigger_motor1 == (2 ** 13):
+            event['motor1_left'] = False
+            event['missed_m1'] = False
         else:
-            event['motor1'] = np.nan
+            event['motor1_left'] = np.nan
+            event['missed_m1'] = True
 
         # Accuracy
-        if event['motor1'] not in [np.nan]:
-            event['missed_m1'] = False
-            if event['target'] == 'letter':
-                event['correct'] = event['letter_resp'] == event['motor1']
-            elif event['target'] == 'number':
-                event['correct'] = event['letter_resp'] != event['motor1']
+        if event['present'] and not event['missed_m1']:
+            if event['letter_target']:
+                event['correct'] = \
+                    event['letter_resp_left'] == event['motor1_left']
+            elif not event['letter_target']:
+                event['correct'] = \
+                    event['letter_resp_left'] != event['motor1_left']
         else:
-            event['missed_m1'] = True
-            event['correct'] = np.nan # we want to differentiate between incorrect and no answer
+            event['correct'] = np.nan  # no answer or absent trials
 
         # PAS
         event['missed_m2'] = False
@@ -169,89 +173,84 @@ def get_events(events):
         # XXX Define this only when you'll analyze it
         # # Seen/Unseen (0,1 vs. 2,3)
         # if event['pas'] < 2:
-        #     event['seen'] = 'seen'
+        #     event['seen'] = False
         # elif event['pas'] > 1:
-        #     event['seen'] = 'unseen'
+        #     event['seen'] = True
         # else:
         #     event['seen'] = np.nan
 
         # Seen/Unseen (0 vs. 1,2,3)
         if event['pas'] < 1:
-            event['seen'] = 'unseen'
+            event['seen'] = False
         elif event['pas'] > 0:
-            event['seen'] = 'seen'
+            event['seen'] = True
         else:
             event['seen'] = np.nan
 
         # Seen/Unseen (0 vs. 1,2,3) together with absent trials
-        if event['present'] == False:
-            event['abs_seen'] = 0
-        elif event['present'] == True:
-            if event['seen'] == 'seen':
-                event['abs_seen'] = 1
-            elif event['seen'] == 'unseen':
-                event['abs_seen'] = 2
+        if not event['present']:
+            event['abs_seen'] = 0  # absent
+        elif event['present']:
+            if not event['seen']:
+                event['abs_seen'] = 1  # unseen
+            elif event['seen']:
+                event['abs_seen'] = 2  # seen
 
         # SOA together with absent trials
-        if event['present'] == False:
+        if not event['present']:
             event['abs_soa'] = 0
         else:
             event['abs_soa'] = event['soa']
 
         # Block
         if ((trigger_stim % 2) == 1):
-            #odd numbers
-            event['block'] = 'invisible'
+            # odd numbers
+            event['block'] = 0
         elif ((trigger_stim % 2) == 0):
-            #even numbers
-            event['block'] = 'visible'
+            # even numbers
+            event['block'] = 1
         else:
             raise RuntimeError('did not find adequate ttl')
             event['block'] = np.nan
 
         # Local context
-        if ii > 1:
+        if ii > 0:
             seen1 = events_data_frame[-1]['seen']
-            if seen1 == 'seen':
-                event['local_context'] = 'S'
-            elif seen1 == 'unseen':
-                event['local_context'] = 'U'
-            else:
-                event['local_context'] = np.nan
+            event['local_seen'] = seen1
         else:
-            event['local_context'] = np.nan
+            event['local_seen'] = np.nan
 
-        if ii > 2:
+        if ii > 1:
             seen2 = events_data_frame[-2]['seen']
-            if seen1 == 'seen' and seen2 == 'seen':
-                event['local_context2'] = 'SS'
-            elif seen1 == 'seen' and seen2 == 'unseen':
-                event['local_context2'] = 'SU'
-            elif seen1 == 'unseen' and seen2 == 'seen':
-                event['local_context2'] = 'US'
-            elif seen1 == 'unseen' and seen2 == 'unseen':
-                event['local_context2'] = 'UU'
+            if seen1 and seen2:
+                event['local_seen2'] = 11
+            elif seen1 and not seen2:
+                event['local_seen2'] = 10
+            elif not seen1 and seen2:
+                event['local_seen2'] = 01
+            elif not seen1 and not seen2:
+                event['local_seen2'] = 00
             else:
                 event['local_context2'] = np.nan
         else:
             event['local_context2'] = np.nan
 
-
         events_data_frame.append(event)
     return pd.DataFrame(events_data_frame)
 
+
 def extract_events(raw):
     """This is a hand-made extraction of the events so as to look for all stim
-    triggers, find the two following motor responses, and combined their trigger
-    values to know that they go in triplets."""
+    triggers, find the two following motor responses, and combined their
+    trigger values to know that they go in triplets."""
 
     events = mne.find_events(raw, stim_channel='STI101', verbose=True,
                              consecutive='increasing', min_duration=0.000,
-                             shortest_event=1) # XXX ISSUE WITH MISSING TRIGGER
-                                               # IN ABSENT TRIAL
+                             shortest_event=1)
+    # XXX ISSUE WITH MISSING TRIGGER IN ABSENT TRIALS
 
     # Define stim and motor triggers
-    stim  = range(1, 64)
+    stim = range(1, 64)
     motor = [64, 128, 256, 512, 8192, 16384]
 
     # Identify # of stim and motor events
@@ -267,7 +266,7 @@ def extract_events(raw):
         # only keep those that are motor responses
         inds = np.intersect1d(inds, motor_inds)
         if len(inds) < 2:
-            raise(RuntimeError('< 2 motor responses after stim %s !' % ind))
+            raise(RuntimeError('< 2 motor responses after stim %s !' % inds))
 
         # Combine stimulus and response trigger values so as to get both
         # stimulus and motor information in each event.
