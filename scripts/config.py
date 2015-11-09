@@ -42,10 +42,11 @@ subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 5))  # number of runs per subject
 
-# FILTERING ###################################################################
+# FILTERING & BASELINING#######################################################
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
+baseline = False
 
 # FILENAMES ###################################################################
 raw_fname_tmp = '{:s}_main{:d}_sss.fif'
@@ -97,25 +98,24 @@ event_id = None
 cfg = dict(event_id=event_id, decim=4)
 # reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5)
 
-# Specific epochs parameters for stim-lock and response-lock conditions
-epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
-                   tmax=1.000, baseline=[-.500, -.100], **cfg)
+# Specific epochs parameters for stim-lock and response-lock conditions,
+# depending on whether or not a beaseline is applied
+if baseline:
+    epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
+                       tmax=1.000, baseline=[-.500, -.100], **cfg)
+else:
+    epochs_stim = dict(name='stim_lock', events='stim', tmin=-0.500,
+                       tmax=1.000, baseline=None, **cfg)
+
 epochs_motor1 = dict(name='motor1_lock', events='motor1', tmin=-0.500,
                      tmax=0.200, baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_motor1]
+
 # XXX JRK: Could add second motor response preproc here
 # Redefined below to only do stim-locked epochs
 # epochs_types = [dict(name='stim_lock'), dict(name='stim_lock-unmasked'),
 #                 dict(name='resp_lock'), dict(name='resp_lock-unmasked')]
 epochs_types = ['', '-unmasked']
-
-
-# MAIN CONTRASTS ##############################################################
-# Here define your contrast of interest
-
-# import variable 'analyses' after running p300.analyses.py
-from p300.analyses import analyses
-
 
 # DECODING ####################################################################
 # preprocessing for memory
@@ -146,8 +146,6 @@ clu_threshold = 0.05
 # TO RUN TESTS ################################################################
 use_ica = False  # XXX deal with bad chan first
 # runs = [1]
-subjects = [subjects[0]]
-#subjects = ['s23_pf120155']
 epochs_params = [epochs_params[0]]
-#data_path = '/Users/Gabriela/Documents/2014-2015/P3/python/meg_expectation_p3/data'
 data_path = '/Volumes/INSERM/data'
+# subjects=[subjects[0]]
