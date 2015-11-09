@@ -7,8 +7,6 @@ import os.path as op
 
 import mne
 
-import numpy as np
-
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import extract_events
@@ -20,7 +18,6 @@ from config import (
     event_id,
     results_dir,
     events_fname_filt_tmp,
-    events_params,
     raw_fname_filt_tmp,
     open_browser
 )
