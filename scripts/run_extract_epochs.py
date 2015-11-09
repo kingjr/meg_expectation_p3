@@ -6,9 +6,7 @@ import sys
 import os.path as op
 import numpy as np
 import mne
-import matplotlib.pyplot as plt
 from mne.io import Raw
-from mne.io.pick import _picks_by_type as picks_by_type # XXX users should not need this
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 
@@ -29,8 +27,8 @@ from scripts.config import (
     ecg_ch,
     events_fname_filt_tmp,
     chan_types,
+    baseline,
     epochs_params,
-    epochs_types,
     use_ica,
     open_browser
 )
@@ -48,7 +46,7 @@ if len(sys.argv) > 1:
 for subject in subjects:
     print(subject)
     this_path = op.join(data_path, 'MEG', subject)
-    all_epochs = [list(), list()] # XXX should be generic to take len(epochs_params)
+    all_epochs = [list(), list()]  # XXX should take len(epochs_params)
 
     icas = list()
     if use_ica is True:
@@ -73,15 +71,16 @@ for subject in subjects:
         # Epoch data for each epoch type
         for ep, epochs_list in zip(epochs_params, all_epochs):
             # Select events
-            sel = events_select_condition(events[:,2], ep['events'])
-            events_sel = events[sel,:]
+            sel = events_select_condition(events[:, 2], ep['events'])
+            events_sel = events[sel, :]
 
             # Only keep parameters applicable to mne.Epochs() XXX CLEAN UP JR!
-            ep_epochs = {key:v for key, v in ep.items() if key in ['event_id',
-                                                               'tmin', 'tmax',
-                                                               'baseline',
-                                                               'reject',
-                                                               'decim']}
+            ep_epochs = {key: v for key, v in ep.items() if key in ['event_id',
+                                                                    'tmin',
+                                                                    'tmax',
+                                                                    'baseline',
+                                                                    'reject',
+                                                                    'decim']}
             # Epoch raw data
             epochs = mne.Epochs(raw=raw, preload=True, events=events_sel,
                                 **ep_epochs)
@@ -100,27 +99,33 @@ for subject in subjects:
             # Append runs
             epochs_list.append(epochs)
 
-    for name, epochs_list in zip([ep['name'] for ep in epochs_params], all_epochs):
+    for name, epochs_list in zip([ep['name'] for ep in epochs_params],
+                                 all_epochs):
         # Concatenate runs
         epochs = mne.epochs.concatenate_epochs(epochs_list)
 
         # Artefact rejection and rereference EEG data
         # (EEG channel rejection, rereference, then trial rejection)
-        epochs = artefact_rej(name,subject,epochs)
+        epochs = artefact_rej(name, subject, epochs)
 
         # Save epochs before mask subtraction
-        epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
+        if baseline:
+            epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name,
+                        subject)))
+        else:
+            epochs.save(op.join(this_path, 'nobl-{}-{}-epo.fif'.format(name,
+                                subject)))
 
         # Plot before mask subtraction
-        #-- % dropped
+        # dropped
         report.add_figs_to_section(
             plot_drop_log(epochs.drop_log), '%s (%s): total dropped'
-                          % (subject, name), 'Drop: ' + name)
-        #-- % trigger channel
+                                            % (subject, name), 'Drop: ' + name)
+        # trigger channel
         ch = mne.pick_channels(epochs.ch_names, ['STI101'])
-        epochs._data[:, ch,:] = (2.*(epochs._data[:,ch,:] > 1) +
-                                 1.*(epochs._data[:,ch,:] < 8192))
-        #-- % evoked before mask subtraction
+        epochs._data[:, ch, :] = (2.*(epochs._data[:, ch, :] > 1) +
+                                  1.*(epochs._data[:, ch, :] < 8192))
+        # evoked before mask subtraction
         evoked = epochs.average()
         fig = evoked.plot(show=False)
         report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
@@ -135,21 +140,24 @@ for subject in subjects:
             fig = evoked.plot_topomap(times, ch_type=ch_type, show=False)
             report.add_figs_to_section(
                 fig, '%s (%s): topo %s' % (subject, name, ch_type),
-                                        'Topo: ' + name)
+                'Topo: ' + name)
 
         # # Mask subtraction
         events = get_events(epochs.events)
         epochs = subtract_mask(epochs, events['soa_ttl'], events['present'])
 
         # Save mask-subtracted data
-        epochs.save(op.join(this_path,
-                    '{}-unmasked-{}-epo.fif'.format(name, subject)))
-
+        if baseline:
+            epochs.save(op.join(this_path,
+                        '{}-unmasked-{}-epo.fif'.format(name, subject)))
+        else:
+            epochs.save(op.join(this_path,
+                        'nobl-{}-unmasked-{}-epo.fif'.format(name, subject)))
         # Plot mask-subtracted data
         evoked = epochs.average()
         fig = evoked.plot(show=False)
-        report.add_figs_to_section(fig, '%s (%s) UNMASKED: butterfly' % (subject, name),
-                                   'Butterfly: ' + name)
+        report.add_figs_to_section(fig, '%s (%s) UNMASKED: butterfly'
+                                   % (subject, name), 'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,
                           (epochs.tmax - epochs.tmin) / 20)
         for ch_type in chan_types:
@@ -160,6 +168,6 @@ for subject in subjects:
             fig = evoked.plot_topomap(times, ch_type=ch_type, show=False)
             report.add_figs_to_section(
                 fig, '%s (%s): UNMASKED: topo %s' % (subject, name, ch_type),
-                                        'Topo: ' + name)
+                'Topo: ' + name)
 
 report.save(open_browser=open_browser)
