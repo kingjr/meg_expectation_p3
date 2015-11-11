@@ -142,6 +142,7 @@ def get_events(events):
             event['missed_m1'] = True
 
         # Accuracy
+        event['correct_undef'] = False
         if event['present'] and not event['missed_m1']:
             if event['letter_target']:
                 event['correct'] = \
@@ -151,9 +152,11 @@ def get_events(events):
                     event['letter_resp_left'] != event['motor1_left']
         else:
             event['correct'] = np.nan  # no answer or absent trials
+            event['correct_undef'] = True
 
         # PAS
         event['missed_m2'] = False
+        event['pas_undef'] = False
         if trigger_motor2 == (2 ** 6):
             # 64
             event['pas'] = 0
@@ -169,6 +172,7 @@ def get_events(events):
         else:
             event['missed_m2'] = True
             event['pas'] = np.nan
+            event['pas_undef'] = True
 
         # XXX Define this only when you'll analyze it
         # # Seen/Unseen (0,1 vs. 2,3)
@@ -180,12 +184,14 @@ def get_events(events):
         #     event['seen'] = np.nan
 
         # Seen/Unseen (0 vs. 1,2,3)
+        event['seen_undef'] = False
         if event['pas'] < 1:
             event['seen'] = False
         elif event['pas'] > 0:
             event['seen'] = True
         else:
             event['seen'] = np.nan
+            event['seen_undef'] = True
 
         # Seen/Unseen (0 vs. 1,2,3) together with absent trials
         if not event['present']:
@@ -203,6 +209,7 @@ def get_events(events):
             event['abs_soa'] = event['soa']
 
         # Block
+        event['block_undef'] = False
         if ((trigger_stim % 2) == 1):
             # odd numbers
             event['block'] = 0
@@ -212,13 +219,21 @@ def get_events(events):
         else:
             raise RuntimeError('did not find adequate ttl')
             event['block'] = np.nan
+            event['block_undef'] = True
 
         # Local context
+        event['local_undef'] = False
+        event['local2_undef'] = False
         if ii > 0:
             seen1 = events_data_frame[-1]['seen']
-            event['local_seen'] = seen1
+            # event['local_seen'] = seen1 gives a future Warning
+            if seen1:
+                event['local_seen'] = True
+            elif not seen1:
+                event['local_seen'] = False
         else:
             event['local_seen'] = np.nan
+            event['local_undef'] = True
 
         if ii > 1:
             seen2 = events_data_frame[-2]['seen']
@@ -231,9 +246,11 @@ def get_events(events):
             elif not seen1 and not seen2:
                 event['local_seen2'] = 00
             else:
-                event['local_context2'] = np.nan
+                event['local_seen2'] = np.nan
+                event['local2_undef'] = True
         else:
-            event['local_context2'] = np.nan
+            event['local_seen2'] = np.nan
+            event['local2_undef'] = True
 
         events_data_frame.append(event)
     return pd.DataFrame(events_data_frame)
