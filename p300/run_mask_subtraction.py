@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def simulate_data():
     """Simulate data"""
     from mne import create_info, EpochsArray
@@ -14,7 +15,7 @@ def simulate_data():
     info = create_info(ch_names, 250, 'eeg')
     epochs = EpochsArray(np.zeros((n_trial, n_chan, n_time)),
                          info, events, tmin=-.100)
-    
+
     for trial, (soa, present) in enumerate(zip(event_soa, event_present)):
         t = np.where(epochs.times >= soa / 1000.)[0][0]
         # add mask data
@@ -62,7 +63,7 @@ def subtract_mask(epochs, event_soa, event_present):
     # --- Robust average across all mask
     data_mask = np.concatenate(data_mask, axis=0)
     mask_template = robust_mean(data_mask, axis=0)
-    # plt.matshow(data_mask[:, 0, :])
+    # plt.matshow(mask_template[:, :])
 
     # Substract mask template
     picks = pick_types(epochs.info, meg=True, eeg=True, stim=False, misc=False)
