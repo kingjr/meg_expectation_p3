@@ -64,8 +64,8 @@ for subject, epoch_params in product(subjects, epochs_params):
         query, condition = analysis['query'], analysis['condition']
         sel = range(len(events)) if query is None \
             else events.query(query).index
-        #TODO change analyses so that nan gets thrown out in query, change this to be a warning if you see a nan here
-        #sel = [ii for ii in sel if ~np.isnan(events[condition][sel[ii]])]
+        # TODO change analyses so that nan gets thrown out in query, change this to be a warning if you see a nan here
+        # sel = [ii for ii in sel if ~np.isnan(events[condition][sel[ii]])]
         y = np.array(events[condition], dtype=np.float32)
 
         print analysis['name'], np.unique(y[sel]), len(sel)
@@ -98,7 +98,7 @@ for subject, epoch_params in product(subjects, epochs_params):
         with open(pkl_fname, 'wb') as f:
             # pickle.dump([gat, analysis, sel, events], f)
             pickle.dump([gat.scores_, analysis, sel, events], f)
-        ## TODO : Just save gat.scores for now, but need to also save gat
+        # TODO : Just save gat.scores for now, but need to also save gat
 
         # Plot
         fig = gat.plot_diagonal(show=False)
