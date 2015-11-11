@@ -8,6 +8,7 @@ import mne
 from meeg_preprocessing.utils import setup_provenance
 
 from p300.conditions import get_events
+from p300.analyses import analyses
 
 from toolbox.jr_toolbox.utils import (meg_to_gradmag, share_clim)
 from jr.stats import nested_analysis
@@ -15,10 +16,10 @@ from jr.stats import nested_analysis
 from config import (
     data_path,
     subjects,
+    baseline,
     results_dir,
     epochs_params,
     epochs_types,
-    analyses,
     chan_types,
     open_browser,
 )
@@ -37,8 +38,12 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
     print(subject, eptyp_name)
 
     # Get MEG data
-    epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(eptyp_name, subject))
+    if baseline:
+        epo_fname = op.join(data_path, 'MEG', subject,
+                            '{}-{}-epo.fif'.format(eptyp_name, subject))
+    elif not baseline:
+        epo_fname = op.join(data_path, 'MEG', subject,
+                            'nobl-{}-{}-epo.fif'.format(eptyp_name, subject))
     epochs = mne.read_epochs(epo_fname)
     # Get events specific to epoch definition (stim or motor lock)
     events = get_events(epochs.events)
@@ -55,13 +60,17 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
         evoked = epochs.average()
         evoked.data = coef
 
-        # Save all_evokeds
+        # # Save all_evokeds
         # FIXME make paths in config to avoid dealing with file
         save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
-            eptyp_name, analysis['name']))
+        if baseline:
+            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
+                eptyp_name, analysis['name']))
+        elif not baseline:
+            pkl_fname = op.join(save_dir, 'nobl-%s-cluster_sensors_%s.pickle'
+                                % (eptyp_name, analysis['name']))
         with open(pkl_fname, 'wb') as f:
             pickle.dump([evoked, sub, analysis], f)
 
