@@ -1,19 +1,14 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import os.path as op
 import mne
-from mne.io import set_eeg_reference
 from meeg_preprocessing.utils import setup_provenance
-# from mne.datasets import sample
-from p300.conditions import get_events
-from scripts.config import (data_path, epochs_params, epochs_types,
-                            results_dir,open_browser)
+from scripts.config import results_dir
 from jr.stats import robust_mean
 
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
-def artefact_rej(eptyp_name,subject,epochs):
+
+def artefact_rej(eptyp_name, subject, epochs):
     print('Artefact Rejection')
     epochs_ = epochs.copy()
     # Only define artefact rejection based on this shorter epoch
@@ -27,14 +22,10 @@ def artefact_rej(eptyp_name,subject,epochs):
         epochs_.info['chs'][sel_ch[0]]['kind'] = 3
     # -------------------------------------------------------------
 
-    # Get events specific to epoch definition (stim or motor lock)
-    events = get_events(epochs_.events)
-
     # Identify bad EEG channels
     epochs_eeg = epochs_.pick_types(meg=False, eeg=True, copy=True)
     data = epochs_eeg._data
     chan_deviation = np.median(np.std(data, axis=2), axis=0)
-
 
     def mad(x, axis=None):
         center = np.median(x, axis=axis)
@@ -49,14 +40,13 @@ def artefact_rej(eptyp_name,subject,epochs):
     epochs.interpolate_bads(reset_bads=False)
 
     #  Average rereference for EEG data
-    from mne import pick_types
-    # picks = pick_types(epochs.info, eeg=True, meg=False)
-    # XXX Mne seem to only select  non interlpolated channels
-    picks =  np.array([ii for ii, chan in enumerate(epochs.ch_names)  if (chan[:3] == 'EEG') and (chan != 'EEG064')])
+    # XXX Manual because MNE pick_types only selects non-interpolated channels
+    picks = np.array([ii for ii, chan in enumerate(epochs.ch_names)
+                      if (chan[:3] == 'EEG') and (chan != 'EEG064')])
     data = np.copy(epochs._data[:, picks, :])
     # mean across channels
     ref = robust_mean(data, axis=1, percentile=[5, 95])
-    data -= np.tile(ref, [len(picks),1, 1]).transpose(1,0,2)  # probably needs a transpose here
+    data -= np.tile(ref, [len(picks), 1, 1]).transpose(1, 0, 2)
     epochs._data[:, picks, :] = data
 
     # Identify bad trials
@@ -84,11 +74,11 @@ def artefact_rej(eptyp_name,subject,epochs):
 
     # Find the good trials, only keep those
     good_trials = np.where(trial_deviation < trial_threshold)[0]
-    epochs=epochs[good_trials]
+    epochs = epochs[good_trials]
 
     # Plot
 
-    #TODO need to change to double check these plots, add to return statement?
+    # TODO need to change to double check these plots, add to return statement?
 
     # Channel rejection check
     # fig, ax = plt.subplots(1)
@@ -100,8 +90,8 @@ def artefact_rej(eptyp_name,subject,epochs):
     # Topo from before channel rejection
     # evoked_bad.data = robust_mean(epochs_eeg._data, axis = 0)
     # fig1 = evoked_bad.plot_topomap(show=False)
-    # report.add_figs_to_section(fig1, ('%s (%s): BEFORE artifact rejection' % (
-    #     subject, eptyp_name)))
+    # report.add_figs_to_section(fig1, ('%s (%s): BEFORE artifact rejection' %
+    #                           (subject, eptyp_name)))
 
     # Topo after channel rejection
     # Interpolate EEG only (just for plotting)
