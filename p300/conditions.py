@@ -66,7 +66,7 @@ def get_events(events):
         if trigger_stim in [i * 12 + j for i in range(5) for j in range(1, 5)]:
             # 1-4 13-16 25-28 37-40 49-52
             event['present'] = False
-            event['target'] = np.nan
+            event['letter_target'] = np.nan
             event['soa'] = np.nan
             if trigger_stim in range(1, 5):
                 event['soa_ttl'] = 17
@@ -98,6 +98,7 @@ def get_events(events):
                 event['letter_target'] = np.nan
 
             # SOA for target-present trials
+            event['soa_undef'] = False
             if trigger_stim in range(5, 13):
                 # 5, 7, 9, 11 (can be 5-12)
                 event['soa'] = 17
@@ -116,6 +117,7 @@ def get_events(events):
             else:
                 raise RuntimeError('did not find adequate ttl')
                 event['soa'] = np.nan
+                event['soa_undef'] = True
 
             event['soa_ttl'] = event['soa']
 
