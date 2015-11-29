@@ -46,7 +46,7 @@ runs = list(range(1, 5))  # number of runs per subject
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
-baseline = False
+baseline = True
 
 # FILENAMES ###################################################################
 raw_fname_tmp = '{:s}_main{:d}_sss.fif'
@@ -60,9 +60,6 @@ fwd_fname_tmp = '{:s}-meg-fwd.fif'
 inv_fname_tmp = '{:s}-meg-inv.fif'
 cov_fname_tmp = '{:s}-meg-cov.fif'
 src_fname_tmp = '{:s}-oct-6-src.fif'
-
-
-# morph_mat_fname_tmp = '{}-morph_mat.mat'
 
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
@@ -148,4 +145,4 @@ use_ica = False  # XXX deal with bad chan first
 # runs = [1]
 epochs_params = [epochs_params[0]]
 data_path = '/Volumes/INSERM/data'
-# subjects=[subjects[0]]
+# subjects = [subjects[0]]
