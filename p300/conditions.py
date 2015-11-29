@@ -68,6 +68,7 @@ def get_events(events):
             event['present'] = False
             event['letter_target'] = np.nan
             event['soa'] = np.nan
+            event['soa_undef'] = True
             if trigger_stim in range(1, 5):
                 event['soa_ttl'] = 17
             elif trigger_stim in range(13, 17):
@@ -98,22 +99,26 @@ def get_events(events):
                 event['letter_target'] = np.nan
 
             # SOA for target-present trials
-            event['soa_undef'] = False
             if trigger_stim in range(5, 13):
                 # 5, 7, 9, 11 (can be 5-12)
                 event['soa'] = 17
+                event['soa_undef'] = False
             elif trigger_stim in range(17, 25):
                 # 17-24
                 event['soa'] = 33
+                event['soa_undef'] = False
             elif trigger_stim in range(29, 37):
                 # 29-36
                 event['soa'] = 50
+                event['soa_undef'] = False
             elif trigger_stim in range(41, 49):
                 # 41-48
                 event['soa'] = 67
+                event['soa_undef'] = False
             elif trigger_stim in range(53,  61):
                 # 54,56,58,60 (can be 53-60)
                 event['soa'] = 83
+                event['soa_undef'] = False
             else:
                 raise RuntimeError('did not find adequate ttl')
                 event['soa'] = np.nan
@@ -258,15 +263,23 @@ def get_events(events):
     return pd.DataFrame(events_data_frame)
 
 
-def extract_events(raw):
+def extract_events(subject, raw):
     """This is a hand-made extraction of the events so as to look for all stim
     triggers, find the two following motor responses, and combined their
-    trigger values to know that they go in triplets."""
+    trigger values to know that they go in triplets. Corrects for the subjects
+    who reversed pas ratings."""
+
+    from p300.reverse_pas import reverse_pas
 
     events = mne.find_events(raw, stim_channel='STI101', verbose=True,
                              consecutive='increasing', min_duration=0.000,
                              shortest_event=1)
     # XXX ISSUE WITH MISSING TRIGGER IN ABSENT TRIALS
+
+    # Correct for subject who reversed PAS ratings
+    if subject == 's20_ad120286':
+        print('Correcting for reversed PAS ratings')
+        events = reverse_pas(events)
 
     # Define stim and motor triggers
     stim = range(1, 64)
