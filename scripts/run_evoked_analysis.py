@@ -3,6 +3,7 @@ import os
 import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 import mne
 from meeg_preprocessing.utils import setup_provenance
@@ -13,7 +14,7 @@ from p300.analyses import analyses
 from toolbox.jr_toolbox.utils import (meg_to_gradmag, share_clim)
 from jr.stats import nested_analysis
 
-from config import (
+from scripts.config import (
     data_path,
     subjects,
     baseline,
@@ -30,7 +31,7 @@ report, run_id, results_dir, logger = setup_provenance(script=__file__,
 mne.set_log_level('INFO')
 
 from itertools import product
-
+error_log = list()
 for subject, epoch_params, epoch_type in product(subjects, epochs_params,
                                                  epochs_types):
 
@@ -50,13 +51,21 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
 
     # Apply each analysis
     for analysis in analyses:
-        coef, sub = nested_analysis(
-            epochs._data, events, analysis['condition'],
-            function=analysis.get('erf_function', None),
-            query=analysis.get('query', None),
-            single_trial=analysis.get('single_trial', False),
-            y=analysis.get('y', None),
-            n_jobs=1)
+        try:
+            coef, sub = nested_analysis(
+                epochs._data, events, analysis['condition'],
+                function=analysis.get('erf_function', None),
+                query=analysis.get('query', None),
+                single_trial=analysis.get('single_trial', False),
+                y=analysis.get('y', None),
+                n_jobs=1)
+        # If there are 0 trials in one of the conditions, keep going anyways,
+        # but throw an error
+        except RuntimeError:
+            error_msg = 'Problem with %s, %s!' % (subject, analysis['name'])
+            warnings.warn(error_msg)
+            error_log.append(error_msg)
+            coef, sub = None, None
         evoked = epochs.average()
         evoked.data = coef
 
@@ -100,5 +109,8 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
         print(analysis['name'])
         report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
             subject, eptyp_name, analysis['name'])), analysis['name'])
+
+if error_log:
+    warnings.warn(error_log)
 
 report.save(open_browser=open_browser)
