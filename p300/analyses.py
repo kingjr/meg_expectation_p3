@@ -162,6 +162,17 @@ for seen in ['seen', 'unseen']:
 contrast_local_seen = analysis('local_seen', 'categorize',
                                condition=contrast_local_list)
 
+# Local N-1 context, block (middle SOA trials only)
+contrast_local_list = list()
+blocks = ['invis', 'vis']
+for b in [0, 1]:
+    sub_contrast_ = analysis('local_%s' % blocks[b], 'categorize',
+                             condition='local_seen',
+                             query='local_undef!=True and \ block==%s' % b)
+    contrast_local_list.append(sub_contrast_)
+contrast_local_block = analysis('local_block', 'categorize',
+                                condition=contrast_local_list)
+
 # # Control contrasts
 
 # Top vs. bottom: Cannot do because not coded in triggers
@@ -176,8 +187,6 @@ contrast_motor = analysis('motor', 'categorize', condition='letter_resp_left')
 analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
             regress_abs_seen, regress_abs_soa, contrast_block,
-            regress_block_soa, contrast_block_seen,
+            regress_block_soa, regress_block_pas, contrast_block_seen,
             contrast_local, regress_local_soa, regress_local_soa_mid,
             regress_local_pas, contrast_local_seen]
-# regress_block_pas,
-analyses = [regress_local_soa_mid]
