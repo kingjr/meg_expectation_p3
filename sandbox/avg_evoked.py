@@ -25,12 +25,12 @@ for analysis in analyses:
 
         # Load evokeds
         # FIXME make paths in config to avoid dealing with file
-        save_dir = op.join(data_path, 'MEG', subject, 'evokeds')
+        load_dir = op.join(data_path, 'MEG', subject, 'evokeds')
         if baseline:
-            pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
+            pkl_fname = op.join(load_dir, '%s-cluster_sensors_%s.pickle' % (
                 eptyp_name, analysis['name']))
-        if not baseline:
-            pkl_fname = op.join(save_dir, 'nobl_%s-cluster_sensors_%s.pickle'
+        elif not baseline:
+            pkl_fname = op.join(load_dir, 'nobl-%s-cluster_sensors_%s.pickle'
                                 % (eptyp_name, analysis['name']))
         with open(pkl_fname, 'rb') as f:
             evoked, sub, analysis = pickle.load(f)
@@ -45,13 +45,13 @@ for analysis in analyses:
         pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
             eptyp_name, analysis['name']))
     elif not baseline:
-        pkl_fname = op.join(save_dir, 'nobl_%s-cluster_sensors_%s.pickle'
+        pkl_fname = op.join(save_dir, 'nobl-%s-cluster_sensors_%s.pickle'
                             % (eptyp_name, analysis['name']))
     with open(pkl_fname, 'wb') as f:
         pickle.dump(evoked, f)
 
     fig0 = evoked.plot_topomap(show=False, scale=1,
-                               times=np.linspace(0, .500, 20))
+                               times=np.linspace(-.200, .700, 20))
     report.add_figs_to_section(fig0, ('%s: %s' % (eptyp_name,
                                                   analysis['name'])))
 
