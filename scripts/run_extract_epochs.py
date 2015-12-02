@@ -107,7 +107,6 @@ for subject in subjects:
         # Artefact rejection and rereference EEG data
         # (EEG channel rejection, rereference, then trial rejection)
         epochs = artefact_rej(name, subject, epochs)
-
         # Save epochs before mask subtraction
         if baseline:
             epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name,
