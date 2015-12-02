@@ -4,6 +4,8 @@ import os
 import pickle
 import mne
 from mne.decoding import GeneralizationAcrossTime
+import warnings
+
 
 from meeg_preprocessing.utils import setup_provenance
 from toolbox.jr_toolbox.utils import resample_epochs, decim
@@ -29,7 +31,7 @@ from itertools import product
 #                                                 epochs_types):
 for subject, epoch_params in product(subjects, epochs_params):
     print(subject)
-    # Only use unmasked data for now
+    # Only use masked data for now
     epoch_type = ''
     eptyp_name = epoch_params['name'] + epoch_type
     print(eptyp_name)
@@ -64,7 +66,9 @@ for subject, epoch_params in product(subjects, epochs_params):
         query, condition = analysis['query'], analysis['condition']
         sel = range(len(events)) if query is None \
             else events.query(query).index
-        # TODO change analyses so that nan gets thrown out in query, change this to be a warning if you see a nan here
+        # error_msg = 'Problem with %s, %s!' % (subject, analysis['name'])
+        # warnings.warn(error_msg)
+        # TODO change this to be a warning if you see a nan here
         # sel = [ii for ii in sel if ~np.isnan(events[condition][sel[ii]])]
         y = np.array(events[condition], dtype=np.float32)
 
@@ -89,16 +93,14 @@ for subject, epoch_params in product(subjects, epochs_params):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         if baseline:
-            pkl_fname = op.join(save_dir, '%s-gat_scores_%s.pickle' % (
+            pkl_fname = op.join(save_dir, '%s-gat_%s.pickle' % (
                 eptyp_name, analysis['name']))
         elif not baseline:
-            pkl_fname = op.join(save_dir, 'nobl_%s-gat_scores_%s.pickle' % (
+            pkl_fname = op.join(save_dir, 'nobl_%s-gat_%s.pickle' % (
                 eptyp_name, analysis['name']))
         # Save classifier results
         with open(pkl_fname, 'wb') as f:
-            # pickle.dump([gat, analysis, sel, events], f)
-            pickle.dump([gat.scores_, analysis, sel, events], f)
-        # TODO : Just save gat.scores for now, but need to also save gat
+            pickle.dump([gat, analysis, sel, events], f)
 
         # Plot
         fig = gat.plot_diagonal(show=False)
