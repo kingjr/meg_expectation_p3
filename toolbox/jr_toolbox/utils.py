@@ -3,6 +3,28 @@ import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+from mne.stats import spatio_temporal_cluster_1samp_test
+
+
+# STATS #######################################################################
+
+def stat_fun(x, sigma=0, method='relative'):
+    from mne.stats import ttest_1samp_no_p
+    t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
+    t_values[np.isnan(t_values)] = 0
+    return t_values
+
+
+def stats(X):
+    X = np.array(X)
+    X = X[:, :, None] if X.ndim == 2 else X
+    T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+        X, out_type='mask', stat_fun=stat_fun, n_permutations=2**12,
+        n_jobs=-1)
+    p_values_ = np.ones_like(X[0]).T
+    for cluster, pval in zip(clusters, p_values):
+        p_values_[cluster.T] = pval
+    return np.squeeze(p_values_)
 
 
 def nested_analysis(X, df, condition, function=None, query=None,
