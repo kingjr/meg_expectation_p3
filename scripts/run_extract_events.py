@@ -39,7 +39,8 @@ for subject in subjects:
             continue
         raw = mne.io.Raw(fname)
 
-        events = extract_events(raw)
+        events = extract_events(subject, raw)
+        # NOTE: This function corrects for s20_ad120286 reversing PAS ratings
         print(len(events))
 
         # Save
