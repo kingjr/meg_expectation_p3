@@ -4,8 +4,6 @@ import os
 import pickle
 import mne
 from mne.decoding import GeneralizationAcrossTime
-import warnings
-
 
 from meeg_preprocessing.utils import setup_provenance
 from toolbox.jr_toolbox.utils import resample_epochs, decim
@@ -66,8 +64,6 @@ for subject, epoch_params in product(subjects, epochs_params):
         query, condition = analysis['query'], analysis['condition']
         sel = range(len(events)) if query is None \
             else events.query(query).index
-        # error_msg = 'Problem with %s, %s!' % (subject, analysis['name'])
-        # warnings.warn(error_msg)
         # TODO change this to be a warning if you see a nan here
         # sel = [ii for ii in sel if ~np.isnan(events[condition][sel[ii]])]
         y = np.array(events[condition], dtype=np.float32)
