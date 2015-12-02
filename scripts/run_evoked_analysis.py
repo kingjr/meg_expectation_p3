@@ -83,32 +83,34 @@ for subject, epoch_params, epoch_type in product(subjects, epochs_params,
         with open(pkl_fname, 'wb') as f:
             pickle.dump([evoked, sub, analysis], f)
 
-        # Plot coef
-        fig0 = evoked.plot_topomap(show=False)
-        share_clim(fig0.get_axes())
-        # FIXME: add loop across sensors for topo
+        # Only plot if there are trials to be plotted
+        if evoked.data is not None:
+            # Plot coef
+            fig0 = evoked.plot_topomap(show=False)
+            share_clim(fig0.get_axes())
+            # FIXME: add loop across sensors for topo
 
-        report.add_figs_to_section(fig0, ('%s (%s) %s: COEF topo' % (
-            subject, eptyp_name, analysis['name'])), analysis['name'])
+            report.add_figs_to_section(fig0, ('%s (%s) %s: COEF topo' % (
+                subject, eptyp_name, analysis['name'])), analysis['name'])
 
-        fig1 = evoked.plot_image(show=False)
-        report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
-            subject, eptyp_name, analysis['name'])), analysis['name'])
+            fig1 = evoked.plot_image(show=False)
+            report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
+                subject, eptyp_name, analysis['name'])), analysis['name'])
 
-        # Plot subcondition
-        fig2, ax2 = plt.subplots(len(meg_to_gradmag(chan_types)),
-                                 len(sub['X']), figsize=[19, 10])
-        X_mean = np.mean([X for X in sub['X']], axis=0)
-        for e, (X, y) in enumerate(zip(sub['X'], sub['y'])):
-            evoked.data = X - X_mean
-            evoked.plot_image(axes=ax2[:, e], show=False,
-                              titles=dict(grad='grad (%.2f)' % y,
-                                          mag='mag (%.2s)' % y))
-        for chan_type in range(len(meg_to_gradmag(chan_types))):
-            share_clim(ax2[chan_type, :])
-        print(analysis['name'])
-        report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-            subject, eptyp_name, analysis['name'])), analysis['name'])
+            # Plot subcondition
+            fig2, ax2 = plt.subplots(len(meg_to_gradmag(chan_types)),
+                                     len(sub['X']), figsize=[19, 10])
+            X_mean = np.mean([X for X in sub['X']], axis=0)
+            for e, (X, y) in enumerate(zip(sub['X'], sub['y'])):
+                evoked.data = X - X_mean
+                evoked.plot_image(axes=ax2[:, e], show=False,
+                                  titles=dict(grad='grad (%.2f)' % y,
+                                              mag='mag (%.2s)' % y))
+            for chan_type in range(len(meg_to_gradmag(chan_types))):
+                share_clim(ax2[chan_type, :])
+            print(analysis['name'])
+            report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
+                subject, eptyp_name, analysis['name'])), analysis['name'])
 
 if error_log:
     warnings.warn(error_log)
