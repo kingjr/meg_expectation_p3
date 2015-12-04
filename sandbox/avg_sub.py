@@ -16,15 +16,15 @@ from p300.analyses import analyses
 #                                                       results_dir=results_dir)
 
 
-epoch_types = epochs_types[1]
-epoch_params = epochs_params[0]
+epochs_type = epochs_types[1]
+epochs_param = epochs_params[0]
 
 for analysis in analyses:
     print(analysis['name'])
     evoked_list = list()
     subevoked_list = list()
     for subject in subjects:
-        eptyp_name = epoch_params['name'] + epoch_types
+        eptyp_name = epochs_param['name'] + epochs_type
 
         # Load evokeds
         # FIXME make paths in config to avoid dealing with file
