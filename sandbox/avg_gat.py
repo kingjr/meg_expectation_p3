@@ -16,9 +16,9 @@ from jr.plot import pretty_gat, pretty_decod
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
-epoch_types = epochs_types[0]
-epoch_params = epochs_params[0]
-eptyp_name = epoch_params['name'] + epoch_types
+epochs_type = epochs_types[0]
+epochs_param = epochs_params[0]
+eptyp_name = epochs_param['name'] + epochs_type
 
 for analysis in analyses:
     print(analysis['name'])
@@ -42,13 +42,13 @@ for analysis in analyses:
     # PLOT
     fig = gat.plot_diagonal(show=False)
     report.add_figs_to_section(fig, 'Across Ss %s %s %s: (diagonal)' % (
-        epoch_params['name'], epoch_types, analysis['name']),
+        epochs_param['name'], epochs_type, analysis['name']),
         analysis['name'])
 
     fig = gat.plot(vmin=np.min(gat.scores_),
                    vmax=np.max(gat.scores_), show=False)
     report.add_figs_to_section(fig, 'Across Ss %s %s %s: GAT' % (
-        epoch_params['name'], epoch_types, analysis['name']),
+        epochs_param['name'], epochs_type, analysis['name']),
         analysis['name'])
 
     # STATS
