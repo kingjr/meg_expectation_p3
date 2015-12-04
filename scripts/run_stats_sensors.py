@@ -17,7 +17,6 @@ from scripts.config import (
     open_browser
 )
 
-# XXX uncomment
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
@@ -33,9 +32,9 @@ if 'meg' in [i['name'] for i in chan_types]:
 # Apply contrast on each type of epoch
 for ep in epochs_params:
     # ep = epochs_params[0]
-    for epoch_type in epochs_types:
+    for epochs_type in epochs_types:
         # epoch_type = epochs_types[0]
-        eptyp_name = ep['name'] + epoch_type
+        eptyp_name = ep['name'] + epochs_type
         for analysis in analyses:
             print(analysis['name'])
             evokeds = list()
