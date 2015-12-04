@@ -25,13 +25,13 @@ report, run_id, _, logger = setup_provenance(
 
 from itertools import product
 
-# for subject, epoch_params, epoch_type in product(subjects, epochs_params,
+# for subject, epochs_param, epochs_type in product(subjects, epochs_params,
 #                                                 epochs_types):
-for subject, epoch_params in product(subjects, epochs_params):
+for subject, epochs_param in product(subjects, epochs_params):
     print(subject)
     # Only use masked data for now
-    epoch_type = ''
-    eptyp_name = epoch_params['name'] + epoch_type
+    epochs_type = ''
+    eptyp_name = epochs_param['name'] + epochs_type
     print(eptyp_name)
 
     # Get MEG data
@@ -56,8 +56,8 @@ for subject, epoch_params in product(subjects, epochs_params):
 
     # Apply each analysis
     for analysis in analyses:
-        logger.info('%s: %s: %s: %s' % (subject, epoch_params['name'],
-                                        epoch_type, analysis['name']))
+        logger.info('%s: %s: %s: %s' % (subject, epochs_param['name'],
+                                        epochs_type, analysis['name']))
         # check if nested analysis
         if isinstance(analysis['condition'], list):
             continue
@@ -72,7 +72,7 @@ for subject, epoch_params in product(subjects, epochs_params):
 
         if len(sel) == 0:
             logger.warning('%s: no epoch in %s %s for %s.' % (
-                subject, epoch_params['name'], epoch_type, analysis['name']))
+                subject, epochs_param['name'], epochs_type, analysis['name']))
             continue
 
         # Apply analysis
@@ -101,13 +101,13 @@ for subject, epoch_params in product(subjects, epochs_params):
         # Plot
         fig = gat.plot_diagonal(show=False)
         report.add_figs_to_section(fig, '%s %s %s %s: (diagonal)' % (
-            subject, epoch_params['name'], epoch_type, analysis['name']),
+            subject, epochs_param['name'], epochs_type, analysis['name']),
             analysis['name'])
 
         fig = gat.plot(vmin=np.min(gat.scores_),
                        vmax=np.max(gat.scores_), show=False)
         report.add_figs_to_section(fig, '%s %s %s %s: GAT' % (
-            subject, epoch_params['name'], epoch_type, analysis['name']),
+            subject, epochs_param['name'], epochs_type, analysis['name']),
             analysis['name'])
 
 report.save(open_browser=open_browser)
