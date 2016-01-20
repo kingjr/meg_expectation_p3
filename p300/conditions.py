@@ -42,6 +42,9 @@ def get_events(events):
     # Loop across all trials
     for ii in range(n_events):
         event = dict()
+        # FIXME: we'll have to sort this out when multiple runs are included
+        # event time sample
+        event['time_sample'] = events[ii, 0]
 
         # Event type: stimulus, 1st (2AFC) or 2nd (PAS) response
         if events[ii, 2] < (2 ** 15):
