@@ -262,6 +262,9 @@ def get_events(events):
             event['local_seen2'] = np.nan
             event['local2_undef'] = True
 
+        # add run trial id
+        event['run_trial_id'] = ii
+
         events_data_frame.append(event)
     return pd.DataFrame(events_data_frame)
 
