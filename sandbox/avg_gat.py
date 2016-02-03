@@ -1,6 +1,7 @@
 import os.path as op
-import pickle
 import numpy as np
+import pickle
+import matplotlib.pyplot as plt
 from meeg_preprocessing.utils import setup_provenance
 from scripts.config import (
     data_path,
@@ -16,9 +17,9 @@ from jr.plot import pretty_gat, pretty_decod
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
-epoch_types = epochs_types[0]
-epoch_params = epochs_params[0]
-eptyp_name = epoch_params['name'] + epoch_types
+epochs_type = epochs_types[0]
+epochs_param = epochs_params[0]
+eptyp_name = epochs_param['name'] + epochs_type
 
 for analysis in analyses:
     print(analysis['name'])
@@ -42,22 +43,23 @@ for analysis in analyses:
     # PLOT
     fig = gat.plot_diagonal(show=False)
     report.add_figs_to_section(fig, 'Across Ss %s %s %s: (diagonal)' % (
-        epoch_params['name'], epoch_types, analysis['name']),
+        epochs_param['name'], epochs_type, analysis['name']),
         analysis['name'])
 
     fig = gat.plot(vmin=np.min(gat.scores_),
                    vmax=np.max(gat.scores_), show=False)
     report.add_figs_to_section(fig, 'Across Ss %s %s %s: GAT' % (
-        epoch_params['name'], epoch_types, analysis['name']),
+        epochs_param['name'], epochs_type, analysis['name']),
         analysis['name'])
 
     # STATS
     chance = analysis['chance']
     from toolbox.jr_toolbox.utils import stats
-    p_values = stats(scores - chance)
+    p_values = stats(np.array(scores_list) - chance)
     sig = p_values < .05
-    decod = [np.diag(score) for score in scores]
+    decod = [np.diag(score) for score in scores_list]
     times = gat.train_times_['times']
-    pretty_decod(decod, times=times, chance=chance, ax=ax, sig=np.diag(sig))
-
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    pretty_decod(decod, times=times, chance=chance, sig=np.diag(sig), ax=ax1)
+    pretty_gat(scores, times=times, chance=chance, sig=sig, ax=ax2)
 report.save(open_browser=open_browser)

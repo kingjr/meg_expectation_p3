@@ -46,7 +46,7 @@ runs = list(range(1, 5))  # number of runs per subject
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
-baseline = True
+baseline = False
 
 # FILENAMES ###################################################################
 raw_fname_tmp = '{:s}_main{:d}_sss.fif'

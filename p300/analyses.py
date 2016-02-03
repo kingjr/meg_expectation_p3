@@ -116,7 +116,7 @@ contrast_block_seen = analysis('block_seen', 'categorize',
 
 # Local N-1 context (all trials)
 contrast_local = analysis('local', 'categorize', condition='local_seen',
-                          query='local_undef!=True')
+                          query='local_undef==False and soa!=17 and soa!=83')
 
 # Local N-1 context, SOA (all trials)
 contrast_local_list = list()
@@ -168,7 +168,7 @@ blocks = ['invis', 'vis']
 for b in [0, 1]:
     sub_contrast_ = analysis('local_%s' % blocks[b], 'categorize',
                              condition='local_seen',
-                             query='local_undef!=True and \ block==%s' % b)
+                             query='local_undef!=True and block==%s' % b)
     contrast_local_list.append(sub_contrast_)
 contrast_local_block = analysis('local_block', 'categorize',
                                 condition=contrast_local_list)
@@ -187,6 +187,14 @@ contrast_motor = analysis('motor', 'categorize', condition='letter_resp_left')
 analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
             regress_abs_seen, regress_abs_soa, contrast_block,
-            regress_block_soa, regress_block_pas, contrast_block_seen,
+            regress_block_soa, contrast_block_seen,
             contrast_local, regress_local_soa, regress_local_soa_mid,
-            regress_local_pas, contrast_local_seen]
+            regress_local_pas, contrast_local_seen, contrast_local_block]
+
+# regress_block_pas
+
+analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
+            contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
+            regress_abs_seen, regress_abs_soa, contrast_block, contrast_local]
+analyses = [contrast_local]
+# analyses = [regress_abs_soa]

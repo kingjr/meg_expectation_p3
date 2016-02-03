@@ -32,10 +32,10 @@ mne.set_log_level('INFO')
 
 from itertools import product
 error_log = list()
-for subject, epoch_params, epoch_type in product(subjects, epochs_params,
-                                                 epochs_types):
+for subject, epochs_param, epochs_type in product(subjects, epochs_params,
+                                                  epochs_types):
 
-    eptyp_name = epoch_params['name'] + epoch_type
+    eptyp_name = epochs_param['name'] + epochs_type
     print(subject, eptyp_name)
 
     # Get MEG data
