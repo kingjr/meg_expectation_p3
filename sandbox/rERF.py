@@ -7,7 +7,6 @@ import os.path as op
 import numpy as np
 import mne
 from mne.stats.regression import linear_regression_raw
-from collections import Counter
 from p300.conditions import get_events
 from p300.conditions import extract_events
 data_path = op.join('/media/DATA/Pro/Projects/Paris/Other/Gabriela/',
@@ -20,79 +19,77 @@ raw_fname = op.join(data_path, subject, 'run_%.2i_filt-0-35_sss_raw.fif' % run)
 raw = mne.io.Raw(raw_fname, preload=True)  # Take first run
 
 # --- extract events
-events = extract_events(subject, raw)
+raw_events = extract_events(subject, raw)
 # XXX my computer is too slow, let's only take magnetometers
 # XXX ideally we may want to apply the analysis in ICA/PCA space with
 # regularization
 raw.pick_types(meg='mag')
 
-events_bhv = get_events(events)  # get event meanings
-
+events = get_events(raw_events)  # get event meanings
 
 # --- generate a selection of events (add mask events to explicitly mention
 # their occurences)
-# trial may have a target and a mask, or just a mask
-events_bhv['event_id'] = np.nan * np.zeros(len(events_bhv))
-# for date, row in df.T.iteritems():
-n_trials = len(events_bhv)
-for loc, event in events_bhv.iterrows():
-    if loc < 2:
-        events_bhv['local_seen'] = False  # XXX
+n_trials = len(events)
+for loc, event in events.iterrows():
     if event['type'] == 'stim':
-        mask_event = event.copy()
+        mask_event = event.copy(deep=True)
         mask_event['event_id'] = 3
         mask_event['type'] = 'mask'
-        mask_event['time_sample'] += (mask_event['soa'] * raw.info['sfreq'] //
-                                      1000)
-        events_bhv.loc[len(events_bhv)] = mask_event
-    if event['type'] == 'stim':
-        events_bhv['event_id'][loc] = 0
-    elif event['type'] == 'motor1':
-        events_bhv['event_id'][loc] = 1
-    elif event['type'] == 'motor2':
-        events_bhv['event_id'][loc] = 2
-    if not event['present'] and event['type'] == 'stim':
-        events_bhv.drop(loc)
+        soa = mask_event['soa'] if not np.isnan(mask_event['soa']) else 0.
+        mask_event['time_sample'] += (soa * raw.info['sfreq'] // 1000)
+        events.loc[len(events)] = mask_event
+    # we'll remove every event for which one of the columns is nan
     if loc >= n_trials:
         break
-event_id = dict(stim=0, mask=3, motor1=1, motor2=2)
 
-events_regression = np.vstack((
-    events_bhv['time_sample'],
-    np.zeros_like((events_bhv['time_sample'])),
-    events_bhv['event_id'])).T
+# creates additional column to respect events 3-column structure
+events['ignore'] = 0
+
+# Drop meaningless events
 
 
-def find_clean_events(events):
-    """
-    The functions doesn't allow duplicate events or nan values.
-    """
-    # remove nan values
-    to_be_removed = list()
-    for ii in range(3):
-        bad = np.where(np.isnan(events[:, ii]))[0]
-        if len(bad):
-            to_be_removed.append(bad)
-    # remove duplicates
-    duplicates = {k for k, v in Counter(events[:, 0]).items() if v > 1}
-    bad = np.where(np.in1d(events[:, 0], list(duplicates)))[0]
-    if len(bad):
-        to_be_removed.append(bad)
-    to_be_removed = np.hstack(to_be_removed)
-    return [ii for ii in range(len(events)) if ii not in to_be_removed]
+def drop(cond):
+    events.drop(events.index[cond], inplace=True)
 
-good_events = find_clean_events(events_regression)
-good_events = good_events[1:]
+drop(events['run_trial_id'] == 0)  # no context
+drop(events['missed_m1'])  # missed responses
+drop(events['missed_m2'])
+drop((-events['present']) & (events['type'] == 'stim'))  # absent trials
+
+# Ensure continous values (avoid strings and booleans)
+events['local_seen'] = events['local_seen'].astype(int)
+events['event_id'] = 0
+event_id = dict()
+for ii, this_type in enumerate(('stim', 'mask', 'motor1', 'motor2')):
+    event_id[this_type] = ii
+    sel = events['type'] == this_type
+    events['event_id'][sel] = ii
+
+# Set covariates as 0 for events different from stim
+sel = events['type'] != 'stim'
+events['local_seen'][sel] = 0
+events['soa'][sel] = 0
+
+# remove duplicates
+time_samples = list()
+for loc, event in events.iterrows():
+    if event['time_sample'] in time_samples:
+        events.drop(loc, inplace=True)
+    else:
+        time_samples.append(event['time_sample'])
 
 # main function
-covariates = dict(local=events_bhv['local_seen'].loc[good_events].astype(int))
+events.reset_index(inplace=True)
 evokeds = linear_regression_raw(
-    raw, events=events_regression[good_events, :],
-    event_id=event_id, reject=None, tmin=-.050, tmax=.600, decim=1,
-    covariates=covariates)
+    raw, events=events[["time_sample", "ignore", "event_id"]].values,
+    event_id=event_id, reject=None, tmin=-.050, tmax=.600,
+    # covariates=events[["local_seen", "soa"]])
+    )
 
 # plot
-for evoked in evokeds:
-    print(evoked)
+for this_factor in evokeds:
+    print(this_factor)
     # XXX what scale should it be??
-    evokeds[evoked].plot_topomap()
+    evokeds[this_factor].plot_joint(
+        title=this_factor, times=[0., .100, .200, .300],
+        ts_args=dict(gfp=True), topomap_args=dict(sensors=False))

@@ -1,6 +1,7 @@
 import os.path as op
-import pickle
 import numpy as np
+import pickle
+import matplotlib.pyplot as plt
 from meeg_preprocessing.utils import setup_provenance
 from scripts.config import (
     data_path,
@@ -54,10 +55,11 @@ for analysis in analyses:
     # STATS
     chance = analysis['chance']
     from toolbox.jr_toolbox.utils import stats
-    p_values = stats(scores - chance)
+    p_values = stats(np.array(scores_list) - chance)
     sig = p_values < .05
-    decod = [np.diag(score) for score in scores]
+    decod = [np.diag(score) for score in scores_list]
     times = gat.train_times_['times']
-    pretty_decod(decod, times=times, chance=chance, ax=ax, sig=np.diag(sig))
-
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    pretty_decod(decod, times=times, chance=chance, sig=np.diag(sig), ax=ax1)
+    pretty_gat(scores, times=times, chance=chance, sig=sig, ax=ax2)
 report.save(open_browser=open_browser)

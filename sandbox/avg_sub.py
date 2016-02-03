@@ -53,8 +53,9 @@ for analysis in analyses:
     for sub, ax, color in zip(sub_evokeds, axes, colors):
         evoked.data = sub
         ax.plot(evoked.times, np.std(sub[chan_mag, :], axis=0))  # ~GFP
-        ax.set_ybound(lower=0e-14, upper=1e-14)
+        ax.set_ybound(lower=0e-14, upper=5e-14)
         evoked.plot_image(show=False)
+        evoked.plot_joint(times=[.100, .200, .300], show=False)
 
     plt.show()
 
@@ -63,6 +64,7 @@ for analysis in analyses:
     # diff = sub_evokeds[1][chan_mag, :]-sub_evokeds[0][chan_mag, :]
     # ax.plot(evoked.times, np.std(diff, axis=0), color=color)  # ~GFP
     evoked.plot_topomap(show=False)
+    evoked.plot_joint(times=np.linspace(0, .500, 10), ts_args=dict(gfp=True))
     plt.show()
 
     # average of sub conditions

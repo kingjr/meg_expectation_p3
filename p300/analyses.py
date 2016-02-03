@@ -116,7 +116,7 @@ contrast_block_seen = analysis('block_seen', 'categorize',
 
 # Local N-1 context (all trials)
 contrast_local = analysis('local', 'categorize', condition='local_seen',
-                          query='local_undef!=True')
+                          query='local_undef==False and soa!=17 and soa!=83')
 
 # Local N-1 context, SOA (all trials)
 contrast_local_list = list()
@@ -196,3 +196,5 @@ analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
 analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
             regress_abs_seen, regress_abs_soa, contrast_block, contrast_local]
+analyses = [contrast_local]
+# analyses = [regress_abs_soa]
