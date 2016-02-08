@@ -5,6 +5,10 @@ from mne.decoding import GeneralizationAcrossTime
 from jr.gat import scorer_auc, scorer_spearman
 from p300.conditions import get_events
 from scripts.config import epochs_params, subjects
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.cross_validation import KFold
 
 # File name
 from scripts.config import data_path
@@ -17,8 +21,7 @@ for subject in subjects:
     epoch_type = '-unmasked'
     eptyp_name = epoch_params['name'] + epoch_type
     epo_fname = op.join(data_path, 'MEG', subject,
-                        '{}-{}-epo.fif'.format(eptyp_name, subject))
-    # TODO change to no baseline 'nobl-'
+                        'nobl-{}-{}-epo.fif'.format(eptyp_name, subject))
 
     # Load data
     epochs = mne.read_epochs(epo_fname)
@@ -30,7 +33,7 @@ for subject in subjects:
     # Apply each analysis
     sel = events.query('soa > 17 and soa < 83 and not local_undef ' +
                        'and not pas_undef').index
-    single_factor = False
+    single_factor = True
     if single_factor:
         factors = ['local_seen']
         y = np.array(events[factors], float)
