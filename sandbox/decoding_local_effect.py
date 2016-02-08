@@ -8,10 +8,11 @@ from scripts.config import epochs_params, subjects
 
 # File name
 from scripts.config import data_path
-data_path = op.join('/media', 'DATA', 'Pro', 'Projects', 'Paris', 'Other',
-                    'Gabriela', 'meg_expectation_p3', 'data')
+# data_path = op.join('/media', 'DATA', 'Pro', 'Projects', 'Paris', 'Other',
+#                    'Gabriela', 'meg_expectation_p3', 'data')
 all_scores = list()
 for subject in subjects:
+    print subject
     epoch_params = epochs_params[0]
     epoch_type = '-unmasked'
     eptyp_name = epoch_params['name'] + epoch_type
@@ -27,7 +28,7 @@ for subject in subjects:
     epochs.crop(0, .7)
 
     # Apply each analysis
-    sel = events.query('soa > 17 and soa < 83').index
+    sel = events.query('soa > 17 and soa < 83 and not local_undef').index
     y = np.array(events['local_seen'], float)
 
     gat = GeneralizationAcrossTime(scorer=scorer_auc,
