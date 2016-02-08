@@ -1,5 +1,4 @@
 import pickle
-import os
 import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,25 +36,26 @@ for analysis in analyses:
         evoked.pick_types(meg=True, eeg=False, misc=False, stim=False)
         # evoked.pick_types(picks)
         evoked_list.append(evoked)
-        picks = mne.pick_types(evoked.info, meg=True, eeg=False, misc=False, stim=False)
+        picks = mne.pick_types(evoked.info, meg=True, eeg=False,
+                               misc=False, stim=False)
         subevoked_list.append(sub['X'][:, picks, :])
         # subevoked_list.append(sub['X'])
 
     # mean coefficient value across subjects
     evoked.data = np.mean([e.data for e in evoked_list], axis=0)
-    fig0 = evoked.plot_topomap(times=np.linspace(0, .600, 20))
+    # fig0 = evoked.plot_topomap(times=np.linspace(0, .600, 20))
     # plot each sub condition
     sub_evokeds = np.mean(subevoked_list, axis=0)  # mean across subjects
     chan_mag = mne.pick_types(evoked.info, meg='mag')
-    fig, axes = plt.subplots(len(sub_evokeds), 1)
+    fig, ax = plt.subplots(1, 1, figsize=[8, 2])
     cmap = plt.get_cmap('RdBu_r')
     colors = cmap(np.linspace(0, 1, len(sub_evokeds)))
-    for sub, ax, color in zip(sub_evokeds, axes, colors):
+    for sub, color in zip(sub_evokeds, colors):
         evoked.data = sub
         ax.plot(evoked.times, np.std(sub[chan_mag, :], axis=0))  # ~GFP
-        ax.set_ybound(lower=0e-14, upper=5e-14)
-        evoked.plot_image(show=False)
-        evoked.plot_joint(times=[.100, .200, .300], show=False)
+        ax.set_ybound(lower=0e-14, upper=6e-14)
+        # evoked.plot_image(show=False)
+        # evoked.plot_joint(times=[.100, .200, .300], show=False)
 
     plt.show()
 
