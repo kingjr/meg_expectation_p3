@@ -8,7 +8,7 @@ from scripts.config import epochs_params, subjects
 # File name
 from scripts.config import data_path
 # data_path = op.join('/media', 'DATA', 'Pro', 'Projects', 'Paris', 'Other',
-#                     'Gabriela', 'meg_expectation_p3', 'data')
+#                    'Gabriela', 'meg_expectation_p3', 'data')
 all_regressions = list()
 for subject in subjects:
     epoch_params = epochs_params[0]
