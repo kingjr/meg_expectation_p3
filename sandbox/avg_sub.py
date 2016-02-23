@@ -10,6 +10,7 @@ from scripts.config import (
     results_dir,
     open_browser)
 from p300.analyses import analyses
+from jr.plot import plot_sem, pretty_plot
 
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
@@ -42,49 +43,75 @@ for analysis in analyses:
         # subevoked_list.append(sub['X'])
 
     # mean coefficient value across subjects
-    evoked.data = np.mean([e.data for e in evoked_list], axis=0)
-    # fig0 = evoked.plot_topomap(times=np.linspace(0, .600, 20))
-    # plot each sub condition
+    # evoked.data = np.mean([e.data for e in evoked_list], axis=0)
+    # fig0 = evoked.plot_topomap(times=np.linspace(-.500, .700, 19))
+
+    # PLOT
+    # plot each sub condition using PLOT
     sub_evokeds = np.mean(subevoked_list, axis=0)  # mean across subjects
     chan_mag = mne.pick_types(evoked.info, meg='mag')
-    fig, ax = plt.subplots(1, 1, figsize=[8, 2])
     cmap = plt.get_cmap('RdBu_r')
     colors = cmap(np.linspace(0, 1, len(sub_evokeds)))
-    for sub, color in zip(sub_evokeds, colors):
-        evoked.data = sub
-        ax.plot(evoked.times, np.std(sub[chan_mag, :], axis=0))  # ~GFP
-        ax.set_ybound(lower=0e-14, upper=6e-14)
-        # evoked.plot_image(show=False)
-        # evoked.plot_joint(times=[.100, .200, .300], show=False)
+    subevoked_list = np.array(subevoked_list)
 
-    plt.show()
+    if analysis['name']=='abs_soa':
+        # get rid of absent condition, correct colors so not white at 50 ms
+        colors = cmap(np.linspace(0, 1, len(sub_evokeds)-1)+.1)
+        soa_subevoked_list = subevoked_list[:,1:6,:,:]
+        fig, ax = plt.subplots(1, 1, figsize=[8, 2])
+
+        plt.figure(facecolor="white")
+        for sub, color in enumerate(colors):
+            # subjects, conditions, sensors, times
+            subevoked = soa_subevoked_list[:, sub, chan_mag, :]
+            gfp = np.std(subevoked, axis=1)
+            plot_sem(evoked.times, gfp, color=color)
+            ax.axvline(0, color='dimgray')
+        pretty_plot(ax)
+        plt.title('SOA')
+        plt.legend(['17 ms', '33 ms', '50 ms', '67 ms', '83 ms'])
+    if analysis['name']=='pas_pst':
+        colors = cmap(np.linspace(0, 1, len(sub_evokeds)))
+        plt.figure(facecolor="white")
+        for sub, color in enumerate(colors):
+            # subjects, conditions, sensors, times
+            subevoked = subevoked_list[:, sub, chan_mag, :]
+            gfp = np.std(subevoked, axis=1)
+            plot_sem(evoked.times, gfp, color=color)
+            ax.axvline(0, color='dimgray')
+        pretty_plot(ax)
+        plt.title('PAS (target-present trials only)')
+        plt.legend(['PAS 0', 'PAS 1', 'PAS 2', 'PAS 3'])
+        plt.show()
+    if analysis['name']=='local':
+        fig, ax = plt.subplots(1, 1)
+        colors = cmap(np.linspace(0, 1, len(sub_evokeds)))
+        plt.figure(facecolor="white")
+        for sub, color in enumerate(colors):
+            # subjects, conditions, sensors, times
+            subevoked = subevoked_list[:, sub, chan_mag, :]
+            gfp = np.std(subevoked, axis=1)
+            plot_sem(evoked.times, gfp, color=color)
+            ax.axvline(0, color='dimgray')
+        pretty_plot(ax)
+        plt.title('Local Context (middle SOAs)')
+        plt.legend(['Local Unseen', 'Local Seen'])
+        plt.show()
+
 
     # differences between sub conditions
-    evoked.data = sub_evokeds[1]-sub_evokeds[0]
+    # evoked.data = sub_evokeds[1]-sub_evokeds[0]
     # diff = sub_evokeds[1][chan_mag, :]-sub_evokeds[0][chan_mag, :]
     # ax.plot(evoked.times, np.std(diff, axis=0), color=color)  # ~GFP
-    evoked.plot_topomap(show=False)
-    evoked.plot_joint(times=np.linspace(0, .500, 10), ts_args=dict(gfp=True))
-    plt.show()
+    # evoked.plot_topomap(show=False)
+    # evoked.plot_joint(times=np.linspace(0, .400, 14), title=analysis['name'],
+    #                   ts_args=dict(gfp=True))
+    # plt.show()
 
     # average of sub conditions
-    evoked.data = np.mean(sub_evokeds, axis=0)
-    evoked.plot_topomap(show=False, times=np.linspace(0, .600, 20))
-    plt.show()
-
-    # manual plot
-    from jr.plot import plot_sem, pretty_plot
-    chan = 182
-    cmap = plt.get_cmap('RdBu_r')
-    colors = cmap(np.linspace(0, 1, len(sub_evokeds)))
-    fig, ax = plt.subplots(1, 1, figsize=[8, 2])
-    subevoked_list = np.array(subevoked_list)
-    for sub, color in enumerate(colors):
-        plot_sem(evoked.times, subevoked_list[:, sub, chan, :], color=color)
-        ax.axvline(0, color='dimgray')
-    pretty_plot(ax)
-    plt.show()
-    report.add_figs_to_section(fig0, ('%s: %s' % (eptyp_name, analysis['name'])))
+    # evoked.data = np.mean(sub_evokeds, axis=0)
+    # evoked.plot_topomap(show=False, times=np.linspace(0, .600, 20))
+    # plt.show()
 
 ## TODO: Save these?
 
