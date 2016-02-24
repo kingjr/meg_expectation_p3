@@ -141,13 +141,18 @@ regress_local_soa_mid = analysis('local_soa_mid', 'regress',
                                  condition=contrast_local_list)
 
 # Local N-1 context, PAS (all trials)
+# "Pure" effect of local context (independent of PAS)
+# ANOTHER CONTRAST - Flip pas and local (make regress) for
+# "pure" effect of PAS (independent of local)
+# (but don't do this for now)
 contrast_local_list = list()
 for pas in range(4):
-    sub_contrast_ = analysis('local_pas_%s' % soa, 'categorize',
+    sub_contrast_ = analysis('local_pas_%s' % pas, 'categorize',
                              condition='local_seen',
-                             query='local_undef!=True and pas==%s' % pas)
+                             query='local_undef!=True and pas==%s \
+                                    and soa!=17 and soa!=83' % pas)
     contrast_local_list.append(sub_contrast_)
-regress_local_pas = analysis('local_pas', 'regress',
+regress_local_pas_mid = analysis('local_pas', 'regress',
                              condition=contrast_local_list)
 
 # Local N-1 context, seen/unseen (all trials)
@@ -189,7 +194,7 @@ analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             regress_abs_seen, regress_abs_soa, contrast_block,
             regress_block_soa, contrast_block_seen,
             contrast_local, regress_local_soa, regress_local_soa_mid,
-            regress_local_pas, contrast_local_seen, contrast_local_block]
+            regress_local_pas_mid, contrast_local_seen, contrast_local_block]
 
 # regress_block_pas
 
@@ -197,4 +202,6 @@ analyses = [contrast_pst, regress_pas, regress_pas_pst, regress_pas_mid,
             contrast_seen_all, contrast_seen_pst, contrast_seen_pst_mid,
             regress_abs_seen, regress_abs_soa, contrast_block, contrast_local]
 analyses = [contrast_local]
-# analyses = [regress_abs_soa]
+#analyses = [regress_abs_soa, regress_pas_pst]
+# analyses = [regress_pas_pst]
+# analyses = [regress_local_pas_mid]
