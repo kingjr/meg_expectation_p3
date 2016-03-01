@@ -15,6 +15,7 @@ from jr.plot import plot_sem, pretty_plot
 report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
+## TODO: Separate these into separate files for each analysis
 
 epochs_type = epochs_types[1]
 epochs_param = epochs_params[0]
@@ -32,14 +33,26 @@ for analysis in analyses:
         pkl_fname = op.join(load_dir, '%s-cluster_sensors_%s.pickle' % (
             eptyp_name, analysis['name']))
         with open(pkl_fname, 'rb') as f:
-            evoked, sub, analysis = pickle.load(f)
-        evoked.data = np.mean(sub['X'], axis=0)
+            info, coefs, sub, analysis = pickle.load(f)
+        from mne import create_info, EvokedArray
+        mne_info = create_info(ch_types=info['ch_types'],
+                               ch_names=info['ch_names'],
+                               sfreq=info['sfreq'])
+        evoked = EvokedArray(np.mean(sub['X'], axis=0), mne_info, info['sfreq'])
         evoked.pick_types(meg=True, eeg=False, misc=False, stim=False)
         # evoked.pick_types(picks)
         evoked_list.append(evoked)
         picks = mne.pick_types(evoked.info, meg=True, eeg=False,
                                misc=False, stim=False)
         subevoked_list.append(sub['X'][:, picks, :])
+        local_seen = list()
+        local_unseen = list()
+        for pas in range(4):
+            local_unseen.append(sub['sub']['X'][0])
+            local_seen.append(sub['sub']['X'][1])
+        local_seen = np.mean(local_seen, axis=0)
+        local_unseen = np.mean(local_unseen, axis=1)
+        subcondition_list.append([local_seen, local_unseen])
         # subevoked_list.append(sub['X'])
 
     # mean coefficient value across subjects
@@ -97,7 +110,16 @@ for analysis in analyses:
         plt.title('Local Context (middle SOAs)')
         plt.legend(['Local Unseen', 'Local Seen'])
         plt.show()
-
+    if analysis['name']=='local_pas':
+        subevoked_list = np.array(subevoked_list)
+        # mean across visibility and subjects
+        mean = subevoked_list.mean(1).mean(0)
+        plt.matshow(mean)
+        plt.show()
+        # GFP
+        gfp = subevoked_list.mean(1).std(1)
+        plot_sem(range(len(gfp.T)), gfp)
+        plt.show()
 
     # differences between sub conditions
     # evoked.data = sub_evokeds[1]-sub_evokeds[0]
